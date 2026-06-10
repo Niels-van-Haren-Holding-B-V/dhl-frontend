@@ -1,13 +1,17 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { CourierLayout } from "../components/CourierLayout";
 import { QueryGate } from "../components/QueryGate";
 import { StatusBadge } from "../components/StatusBadge";
 import { useTrips } from "../queries/trips";
+import { useCreateSession } from "../queries/lockerSession";
+import { apiErrorMessage } from "../api/client";
 import { directionLabel, locationTypeLabel } from "../labels";
 
 export function StopPage() {
   const { tripId, stopId } = useParams();
+  const navigate = useNavigate();
   const { data: trips, isPending, error } = useTrips();
+  const createSession = useCreateSession();
   const trip = trips?.find((t) => t.id === tripId);
   const stop = trip?.stops.find((s) => s.id === stopId);
 
@@ -42,13 +46,27 @@ export function StopPage() {
             </ul>
 
             {stop.deliveryLocationType === "LOCKER" && (
-              <button
-                className="mt-5 min-h-12 w-full rounded-xl bg-dhl-red font-semibold text-white disabled:opacity-50"
-                disabled
-                title="Beschikbaar vanaf milestone M3"
-              >
-                Start lockersessie
-              </button>
+              <>
+                <button
+                  className="mt-5 min-h-12 w-full rounded-xl bg-dhl-red font-semibold text-white disabled:opacity-50"
+                  disabled={createSession.isPending}
+                  onClick={() =>
+                    createSession.mutate(stop.id, {
+                      onSuccess: ({ sessionId, qrPayload }) =>
+                        navigate(`/trips/${tripId}/stops/${stopId}/session/${sessionId}`, {
+                          state: { qrPayload },
+                        }),
+                    })
+                  }
+                >
+                  {createSession.isPending ? "Bezig…" : "Start lockersessie"}
+                </button>
+                {createSession.error != null && (
+                  <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-dhl-red">
+                    {apiErrorMessage(createSession.error)}
+                  </p>
+                )}
+              </>
             )}
           </>
         )}

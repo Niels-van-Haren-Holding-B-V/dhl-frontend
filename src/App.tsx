@@ -3,6 +3,7 @@ import { RequireAuth } from "./auth";
 import { TripListPage } from "./pages/TripListPage";
 import { TripDetailPage } from "./pages/TripDetailPage";
 import { StopPage } from "./pages/StopPage";
+import { SessionPage } from "./pages/SessionPage";
 import { MachinePage } from "./pages/MachinePage";
 
 export function App() {
@@ -39,6 +40,14 @@ export function App() {
         element={
           <RequireAuth>
             <StopPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/trips/:tripId/stops/:stopId/session/:sessionId"
+        element={
+          <RequireAuth>
+            <SessionPage />
           </RequireAuth>
         }
       />
