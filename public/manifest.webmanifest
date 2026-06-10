@@ -1,0 +1,18 @@
+{
+  "name": "Courier",
+  "short_name": "Courier",
+  "description": "Bezorg-app voor koeriers",
+  "lang": "nl",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#FFCC00",
+  "background_color": "#FFCC00",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
