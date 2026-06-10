@@ -299,7 +299,20 @@ export function SessionPage() {
                   </SecondaryButton>
                   <SecondaryButton
                     busy={action.isPending}
-                    onClick={() => action.mutate({ action: "report-issue" })}
+                    onClick={() =>
+                      // The defect door goes out of rotation; re-attempting
+                      // opens the next free door of the same size, or one
+                      // size up when that size has no free doors left.
+                      action.mutate(
+                        { action: "report-issue" },
+                        {
+                          onSuccess: () => {
+                            autoFired.current = null;
+                            setValidation(null);
+                          },
+                        },
+                      )
+                    }
                   >
                     Meld defect vak
                   </SecondaryButton>
