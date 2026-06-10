@@ -58,7 +58,7 @@ function StopCard({ tripId, stop }: { tripId: string; stop: StopView }) {
       </div>
       {isLocker && (
         <div className="mt-3 flex min-h-12 w-full items-center justify-center rounded-xl bg-dhl-red font-semibold text-white">
-          Start lockersessie
+          Naar pakketautomaat
         </div>
       )}
     </Link>
