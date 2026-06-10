@@ -26,10 +26,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }, [auth.user?.access_token]);
 
   useEffect(() => {
-    if (!auth.isLoading && !auth.isAuthenticated && !auth.error) {
+    if (!auth.isLoading && !auth.isAuthenticated && !auth.error && !auth.activeNavigator) {
       void auth.signinRedirect();
     }
-  }, [auth, auth.isLoading, auth.isAuthenticated, auth.error]);
+  }, [auth, auth.isLoading, auth.isAuthenticated, auth.error, auth.activeNavigator]);
 
   if (auth.error) {
     return (
