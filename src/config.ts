@@ -5,6 +5,8 @@ export interface AppConfig {
   authUrl: string;
   authRealm: string;
   authClientId: string;
+  /** Hostname that serves the machine page at / (second ingress, same bundle). */
+  machineHostname?: string;
 }
 
 declare global {

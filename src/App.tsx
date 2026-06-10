@@ -1,4 +1,5 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
+import config from "./config";
 import { RequireAuth } from "./auth";
 import { TripListPage } from "./pages/TripListPage";
 import { TripDetailPage } from "./pages/TripDetailPage";
@@ -7,6 +8,9 @@ import { SessionPage } from "./pages/SessionPage";
 import { MachinePage } from "./pages/MachinePage";
 
 export function App() {
+  // One bundle, two faces: on the locker hostname the root IS the machine page.
+  const isMachineHost = !!config.machineHostname && window.location.hostname === config.machineHostname;
+
   return (
     <Routes>
       {/* The machine page authenticates too (same demo courier user) but has
@@ -22,9 +26,13 @@ export function App() {
       <Route
         path="/"
         element={
-          <RequireAuth>
-            <TripListPage />
-          </RequireAuth>
+          isMachineHost ? (
+            <Navigate to="/machine" replace />
+          ) : (
+            <RequireAuth>
+              <TripListPage />
+            </RequireAuth>
+          )
         }
       />
       <Route

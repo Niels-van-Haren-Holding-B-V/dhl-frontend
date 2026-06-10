@@ -7,5 +7,6 @@ window.__APP_CONFIG__ = {
   authUrl: "${AUTH_URL:-https://dhl-auth.vanharen-it.nl}",
   authRealm: "${AUTH_REALM:-courier}",
   authClientId: "${AUTH_CLIENT_ID:-dhl-frontend}",
+  machineHostname: "${MACHINE_HOSTNAME:-dhl-locker.vanharen-it.nl}",
 };
 EOF
