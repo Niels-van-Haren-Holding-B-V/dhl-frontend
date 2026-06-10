@@ -37,7 +37,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
         <p className="text-dhl-red font-semibold">Inloggen mislukt</p>
         <p className="mt-1 text-sm text-neutral-600">{auth.error.message}</p>
         <button
-          className="mt-4 min-h-12 rounded-xl bg-dhl-red px-6 font-semibold text-white"
+          className="bg-dhl-red mt-4 min-h-12 rounded-xl px-6 font-semibold text-white"
           onClick={() => void auth.signinRedirect()}
         >
           Opnieuw proberen
@@ -59,7 +59,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
 function Splash({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-dhl-yellow p-6 text-center">
+    <div className="bg-dhl-yellow flex min-h-dvh flex-col items-center justify-center p-6 text-center">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow">{children}</div>
     </div>
   );

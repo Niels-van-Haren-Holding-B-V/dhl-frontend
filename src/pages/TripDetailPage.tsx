@@ -43,7 +43,7 @@ function StopCard({ tripId, stop }: { tripId: string; stop: StopView }) {
       className="block rounded-2xl bg-white p-4 shadow active:bg-neutral-50"
     >
       <div className="flex items-start gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-dhl-yellow text-sm font-bold">
+        <span className="bg-dhl-yellow flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold">
           {stop.seq}
         </span>
         <div className="min-w-0 grow">
@@ -57,7 +57,7 @@ function StopCard({ tripId, stop }: { tripId: string; stop: StopView }) {
         <span className="text-2xl text-neutral-400">›</span>
       </div>
       {isLocker && (
-        <div className="mt-3 flex min-h-12 w-full items-center justify-center rounded-xl bg-dhl-red font-semibold text-white">
+        <div className="bg-dhl-red mt-3 flex min-h-12 w-full items-center justify-center rounded-xl font-semibold text-white">
           Naar pakketautomaat
         </div>
       )}

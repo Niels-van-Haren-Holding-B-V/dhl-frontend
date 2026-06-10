@@ -85,6 +85,7 @@ export function useSessionAction(sessionId: string) {
 
 export function useValidate(sessionId: string) {
   return useMutation({
-    mutationFn: async (barcode: string) => (await lockerApi.validate1({ id: sessionId, lockerActionRequest: { barcode } })).data,
+    mutationFn: async (barcode: string) =>
+      (await lockerApi.validate1({ id: sessionId, lockerActionRequest: { barcode } })).data,
   });
 }

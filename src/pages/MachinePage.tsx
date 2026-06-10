@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { QrCameraScanner, scannerBeep } from "../components/QrCameraScanner";
+import { QrCameraScanner } from "../components/QrCameraScanner";
+import { scannerBeep } from "../components/scannerBeep";
 import { useBind, useDoor, useFailureToggle, useSimReset, useSimState } from "../queries/simState";
 import { apiErrorMessage } from "../api/client";
 import type { CompartmentDto, SimStateSnapshot } from "../api/generated";
@@ -18,13 +19,15 @@ export function MachinePage() {
   return (
     <div className="grid min-h-dvh grid-cols-1 gap-4 bg-neutral-100 p-4 text-neutral-900 lg:grid-cols-[3fr_2fr]">
       {isPending ? (
-        <p className="col-span-full self-center text-center text-xl text-neutral-500">Verbinden met automaat…</p>
+        <p className="col-span-full self-center text-center text-xl text-neutral-500">
+          Verbinden met automaat…
+        </p>
       ) : error ? (
-        <p className="col-span-full self-center text-center text-xl text-dhl-red">{apiErrorMessage(error)}</p>
+        <p className="text-dhl-red col-span-full self-center text-center text-xl">{apiErrorMessage(error)}</p>
       ) : (
         <>
-          <MachineFront state={data!} />
-          <ConsolePane state={data!} />
+          <MachineFront state={data} />
+          <ConsolePane state={data} />
         </>
       )}
     </div>
@@ -42,14 +45,17 @@ function MachineFront({ state }: { state: SimStateSnapshot }) {
   const sorted = [...columns.entries()].sort(([a], [b]) => a - b);
   // Columns differ in total pitch; the machine is as tall as its tallest
   // column and shorter columns get a filler panel at the bottom.
-  const machineCm = Math.max(...sorted.map(([, comps]) => comps.reduce((sum, c) => sum + slotPitch(c), 0)), 1);
+  const machineCm = Math.max(
+    ...sorted.map(([, comps]) => comps.reduce((sum, c) => sum + slotPitch(c), 0)),
+    1,
+  );
 
   return (
     <section className="flex min-h-0 flex-col">
       <div className="flex min-h-0 grow flex-col rounded-xl border border-neutral-300 bg-neutral-200 p-3 shadow-lg">
         {/* yellow band over the full width */}
-        <div className="mb-3 flex min-h-12 shrink-0 items-center justify-between rounded-md bg-dhl-yellow px-4">
-          <span className="rounded-sm bg-dhl-red px-2 py-0.5 text-xs font-black tracking-widest text-white">
+        <div className="bg-dhl-yellow mb-3 flex min-h-12 shrink-0 items-center justify-between rounded-md px-4">
+          <span className="bg-dhl-red rounded-sm px-2 py-0.5 text-xs font-black tracking-widest text-white">
             PAKKETAUTOMAAT
           </span>
           <span className="text-sm font-bold text-neutral-800">AMS-042 · {state.config}</span>
@@ -75,12 +81,22 @@ function MachineFront({ state }: { state: SimStateSnapshot }) {
 }
 
 /** One column slot: a courier door, the brievenbus, or an embedded module. */
-function Slot({ compartment: c, state, machineCm }: { compartment: CompartmentDto; state: SimStateSnapshot; machineCm: number }) {
+function Slot({
+  compartment: c,
+  state,
+  machineCm,
+}: {
+  compartment: CompartmentDto;
+  state: SimStateSnapshot;
+  machineCm: number;
+}) {
   const height = `${(slotPitch(c) / machineCm) * 100}%`;
   if (c.label === "TC") return <ConsoleSlot state={state} height={height} />;
   if (c.label === "FC") {
     // functional compartment — closed service module, nothing to interact with
-    return <div style={{ height }} className="rounded-sm border border-neutral-400 bg-neutral-500 shadow-inner" />;
+    return (
+      <div style={{ height }} className="rounded-sm border border-neutral-400 bg-neutral-500 shadow-inner" />
+    );
   }
   if (c.label === "BUS") {
     return (
@@ -103,8 +119,8 @@ function OpenDoorBanner({ state }: { state: SimStateSnapshot }) {
   return (
     <div className="mb-3 flex shrink-0 items-center gap-2 rounded-md border-2 border-amber-400 bg-amber-100 px-4 py-2 font-semibold text-amber-900">
       <span aria-hidden>⚠</span>
-      Sluit eerst {open.length === 1 ? "vak" : "vakken"} {open.map((c) => c.label).join(", ")} voordat een volgend vak
-      kan openen.
+      Sluit eerst {open.length === 1 ? "vak" : "vakken"} {open.map((c) => c.label).join(", ")} voordat een
+      volgend vak kan openen.
     </div>
   );
 }
@@ -144,7 +160,7 @@ function Door({ compartment: c, height }: { compartment: CompartmentDto; height:
           <span className="text-[10px] font-bold text-white drop-shadow">{c.label} open</span>
           <div className="flex flex-wrap justify-center gap-1">
             <button
-              className="rounded bg-dhl-yellow px-1.5 py-0.5 text-[10px] font-bold text-black shadow"
+              className="bg-dhl-yellow rounded px-1.5 py-0.5 text-[10px] font-bold text-black shadow"
               onClick={() => door.mutate({ compartmentNr: c.nr!, action: "CLOSE" })}
             >
               Sluit
@@ -177,15 +193,20 @@ function Door({ compartment: c, height }: { compartment: CompartmentDto; height:
       style={{ height }}
     >
       {/* handle */}
-      <span className="absolute top-1/2 right-1 h-3 w-1 -translate-y-1/2 rounded-full bg-neutral-500/60" aria-hidden />
+      <span
+        className="absolute top-1/2 right-1 h-3 w-1 -translate-y-1/2 rounded-full bg-neutral-500/60"
+        aria-hidden
+      />
       <span className="text-[10px] font-bold text-neutral-600">
         {c.label} · {c.size}
       </span>
-      {c.state === "DEFECT" && <span className="text-sm font-black text-dhl-red">✕</span>}
+      {c.state === "DEFECT" && <span className="text-dhl-red text-sm font-black">✕</span>}
       {c.state === "OCCUPIED" && c.barcode && (
         <span className="font-mono text-[8px] text-neutral-600">{c.barcode}</span>
       )}
-      {c.state === "RESERVED" && <span className="text-[9px] font-semibold text-amber-600">gereserveerd</span>}
+      {c.state === "RESERVED" && (
+        <span className="text-[9px] font-semibold text-amber-600">gereserveerd</span>
+      )}
     </div>
   );
 }
@@ -221,7 +242,7 @@ function ConsoleSlot({ state, height }: { state: SimStateSnapshot; height: strin
   );
 
   return (
-    <div style={{ height }} className="flex flex-col items-center rounded-sm bg-dhl-yellow p-1 shadow-inner">
+    <div style={{ height }} className="bg-dhl-yellow flex flex-col items-center rounded-sm p-1 shadow-inner">
       {/* the screen */}
       <div className="flex min-h-0 w-full grow flex-col gap-1 overflow-y-auto rounded-md border-2 border-neutral-700/80 bg-white p-1.5 shadow-inner">
         <p className="text-center text-[11px] font-bold text-neutral-700">24/7 Pakketautomaat</p>
@@ -243,7 +264,7 @@ function ConsoleSlot({ state, height }: { state: SimStateSnapshot; height: strin
             <button className="text-[10px] text-neutral-500 underline" onClick={() => setCamera(false)}>
               Handmatig invoeren
             </button>
-            {bind.error != null && <p className="text-[10px] text-dhl-red">{apiErrorMessage(bind.error)}</p>}
+            {bind.error != null && <p className="text-dhl-red text-[10px]">{apiErrorMessage(bind.error)}</p>}
           </>
         ) : (
           <>
@@ -258,7 +279,7 @@ function ConsoleSlot({ state, height }: { state: SimStateSnapshot; height: strin
               onChange={(e) => setQr(e.target.value)}
             />
             <button
-              className="min-h-9 w-full rounded bg-dhl-red text-xs font-bold text-white disabled:opacity-40"
+              className="bg-dhl-red min-h-9 w-full rounded text-xs font-bold text-white disabled:opacity-40"
               disabled={!qr || bind.isPending}
               onClick={() => {
                 scannerBeep();
@@ -270,7 +291,7 @@ function ConsoleSlot({ state, height }: { state: SimStateSnapshot; height: strin
             <button className="text-[10px] text-neutral-500 underline" onClick={() => setCamera(true)}>
               Camera gebruiken
             </button>
-            {bind.error != null && <p className="text-[10px] text-dhl-red">{apiErrorMessage(bind.error)}</p>}
+            {bind.error != null && <p className="text-dhl-red text-[10px]">{apiErrorMessage(bind.error)}</p>}
           </>
         )}
       </div>
@@ -425,7 +446,7 @@ function EventLog({ state }: { state: SimStateSnapshot }) {
         {entries.map((e, i) => (
           <li key={`${e.ts}-${i}`} className="flex gap-2 border-b border-neutral-200 py-0.5">
             <span className="shrink-0 text-neutral-400">{e.ts?.slice(11, 19)}</span>
-            <span className="shrink-0 font-semibold text-dhl-red">{e.endpoint}</span>
+            <span className="text-dhl-red shrink-0 font-semibold">{e.endpoint}</span>
             <span className="truncate text-neutral-600">{e.summary}</span>
             <span className="ml-auto shrink-0 text-neutral-400">
               {e.resultingState} v{e.version}

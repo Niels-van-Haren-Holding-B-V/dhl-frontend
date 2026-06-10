@@ -16,7 +16,7 @@ export function QueryGate({
   if (error) {
     return (
       <div className="rounded-2xl bg-white p-4 shadow">
-        <p className="font-semibold text-dhl-red">Er ging iets mis</p>
+        <p className="text-dhl-red font-semibold">Er ging iets mis</p>
         <p className="mt-1 text-sm text-neutral-600">{error.message}</p>
       </div>
     );

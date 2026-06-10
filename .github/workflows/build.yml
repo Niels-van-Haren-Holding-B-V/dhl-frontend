@@ -19,9 +19,11 @@ jobs:
           node-version: "24"
           cache: npm
 
-      - name: Build (type-check + bundle)
+      - name: Lint, format check and build
         run: |
           npm ci
+          npm run lint
+          npm run format:check
           npm run build
 
       - name: Resolve lowercase image name
@@ -50,7 +52,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
-    concurrency: k3s-deploy   # one deploy at a time, shared with dhl-backend
+    concurrency: k3s-deploy # one deploy at a time, shared with dhl-backend
     steps:
       - uses: actions/checkout@v4
 

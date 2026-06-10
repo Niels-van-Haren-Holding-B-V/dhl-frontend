@@ -1,20 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
 
-/** Supermarket-scanner beep via WebAudio — no sound asset needed. */
-export function scannerBeep() {
-  const ctx = new AudioContext();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = "square";
-  osc.frequency.value = 1200;
-  gain.gain.setValueAtTime(0.15, ctx.currentTime);
-  osc.connect(gain).connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.18);
-  osc.onended = () => void ctx.close();
-}
-
 /**
  * Live webcam preview that fires onScan exactly once with the first QR code
  * it decodes. Needs a secure context (HTTPS or localhost) for getUserMedia.
@@ -70,13 +56,13 @@ export function QrCameraScanner({ onScan }: { onScan: (text: string) => void }) 
   }, [onScan]);
 
   if (error) {
-    return <p className="text-[10px] text-dhl-red">{error}</p>;
+    return <p className="text-dhl-red text-[10px]">{error}</p>;
   }
   return (
     <div className="relative overflow-hidden rounded">
       <video ref={videoRef} className="h-28 w-full object-cover" muted playsInline />
       {/* viewfinder corners */}
-      <div className="pointer-events-none absolute inset-3 rounded border-2 border-dhl-yellow/80 [mask-image:linear-gradient(black,black)]" />
+      <div className="border-dhl-yellow/80 pointer-events-none absolute inset-3 rounded border-2 [mask-image:linear-gradient(black,black)]" />
     </div>
   );
 }

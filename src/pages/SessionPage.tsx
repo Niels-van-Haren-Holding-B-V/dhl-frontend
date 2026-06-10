@@ -42,9 +42,9 @@ export function SessionPage() {
   const [validation, setValidation] = useState<ValidationResultDto | null>(null);
   const [manualBarcode, setManualBarcode] = useState("");
   const [manualOpen, setManualOpen] = useState(false);
+  const [doorOpenPolls, setDoorOpenPolls] = useState(0);
   const autoFired = useRef<string | null>(null);
   const adoptedNavParcel = useRef(false);
-  const doorOpenPolls = useRef(0);
 
   const backTo = `/trips/${tripId}/stops/${stopId}`;
   const simState = session.data?.simState;
@@ -77,11 +77,14 @@ export function SessionPage() {
     }
   }, [simState, selected, action, validate]);
 
-  if (simState === "HAND_IN_DOOR_OPEN" || simState === "HAND_OUT_DOOR_OPEN") {
-    doorOpenPolls.current += 1;
-  } else {
-    doorOpenPolls.current = 0;
-  }
+  // How long the door has been open, counted in status polls.
+  const doorIsOpen = simState === "HAND_IN_DOOR_OPEN" || simState === "HAND_OUT_DOOR_OPEN";
+  const polledAt = session.dataUpdatedAt;
+  useEffect(() => {
+    // counting ticks of an external poll is a legitimate setState-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDoorOpenPolls((n) => (doorIsOpen ? n + 1 : 0));
+  }, [doorIsOpen, polledAt]);
 
   const actionError = action.error ?? validate.error;
   const openParcels =
@@ -97,13 +100,14 @@ export function SessionPage() {
         {session.data?.sessionStatus === "EXPIRED" ? (
           <Step title="Sessie verlopen" tone="error">
             <p>De sessie is verlopen. De pakketten volgen de standaard niet-bezorgd afhandeling.</p>
-            <PrimaryButton onClick={() => navigate(backTo)}>Terug naar stop</PrimaryButton>
+            <PrimaryButton onClick={() => void navigate(backTo)}>Terug naar stop</PrimaryButton>
           </Step>
         ) : simState === "CREATED" ? (
           <Step title="Scan de QR-code op de pakketautomaat">
             {selected && (
               <p className="text-center text-sm text-neutral-600">
-                {directionLabel[selected.direction]}: <span className="font-mono font-bold">{selected.barcode}</span>
+                {directionLabel[selected.direction]}:{" "}
+                <span className="font-mono font-bold">{selected.barcode}</span>
               </p>
             )}
             {qrPayload ? (
@@ -116,8 +120,8 @@ export function SessionPage() {
             ) : (
               <>
                 <p>
-                  De QR-code van deze sessie is niet meer beschikbaar (de pagina is opnieuw geladen). Rond de sessie af
-                  en start een nieuwe.
+                  De QR-code van deze sessie is niet meer beschikbaar (de pagina is opnieuw geladen). Rond de
+                  sessie af en start een nieuwe.
                 </p>
                 <PrimaryButton busy={action.isPending} onClick={() => action.mutate({ action: "finish" })}>
                   Sessie afronden
@@ -156,7 +160,9 @@ export function SessionPage() {
                     Opnieuw proberen
                   </PrimaryButton>
                 ) : (
-                  <p className="animate-pulse text-center text-neutral-600">Pak dit pakket — het vak wordt geopend…</p>
+                  <p className="animate-pulse text-center text-neutral-600">
+                    Pak dit pakket — het vak wordt geopend…
+                  </p>
                 )}
               </>
             ) : (
@@ -179,9 +185,14 @@ export function SessionPage() {
                       </button>
                     </li>
                   ))}
-                  {openParcels.length === 0 && <p className="text-neutral-500">Geen open pakketten op deze stop.</p>}
+                  {openParcels.length === 0 && (
+                    <p className="text-neutral-500">Geen open pakketten op deze stop.</p>
+                  )}
                 </ul>
-                <button className="text-sm text-neutral-500 underline" onClick={() => setManualOpen((v) => !v)}>
+                <button
+                  className="text-sm text-neutral-500 underline"
+                  onClick={() => setManualOpen((v) => !v)}
+                >
                   Barcode handmatig invoeren
                 </button>
                 {manualOpen && (
@@ -231,14 +242,20 @@ export function SessionPage() {
             <p className="text-center text-neutral-600">
               De deur is open. Plaats dit pakket, sluit de deur — het scherm loopt vanzelf door.
             </p>
-            {doorOpenPolls.current > DOOR_STUCK_POLLS && (
+            {doorOpenPolls > DOOR_STUCK_POLLS && (
               <div className="rounded-xl bg-amber-50 p-3">
                 <p className="text-sm font-semibold text-amber-900">Deur niet gesloten?</p>
                 <div className="mt-2 flex gap-2">
-                  <SecondaryButton busy={action.isPending} onClick={() => action.mutate({ action: "reopen" })}>
+                  <SecondaryButton
+                    busy={action.isPending}
+                    onClick={() => action.mutate({ action: "reopen" })}
+                  >
                     Open vak opnieuw
                   </SecondaryButton>
-                  <SecondaryButton busy={action.isPending} onClick={() => action.mutate({ action: "report-issue" })}>
+                  <SecondaryButton
+                    busy={action.isPending}
+                    onClick={() => action.mutate({ action: "report-issue" })}
+                  >
                     Meld defect vak
                   </SecondaryButton>
                 </div>
@@ -252,7 +269,10 @@ export function SessionPage() {
           <Step title="Deur gesloten">
             <ParcelCard parcel={selected} fallbackBarcode={barcode} />
             <p className="text-neutral-600">Bevestig dat dit pakket in het vak ligt.</p>
-            <PrimaryButton busy={action.isPending} onClick={() => action.mutate({ action: "confirm", barcode })}>
+            <PrimaryButton
+              busy={action.isPending}
+              onClick={() => action.mutate({ action: "confirm", barcode })}
+            >
               Bevestig plaatsing
             </PrimaryButton>
           </Step>
@@ -278,12 +298,18 @@ export function SessionPage() {
           <Step title="Deur gesloten">
             <ParcelCard parcel={selected} fallbackBarcode={barcode} />
             <p className="text-neutral-600">Bevestig dat je dit pakket hebt meegenomen.</p>
-            <PrimaryButton busy={action.isPending} onClick={() => action.mutate({ action: "out-confirm", barcode })}>
+            <PrimaryButton
+              busy={action.isPending}
+              onClick={() => action.mutate({ action: "out-confirm", barcode })}
+            >
               Bevestig ophalen
             </PrimaryButton>
           </Step>
         ) : simState === "HAND_IN_COMPLETED" || simState === "HAND_OUT_COMPLETED" ? (
-          <Step title={simState === "HAND_IN_COMPLETED" ? "Pakket ingeleverd ✓" : "Pakket opgehaald ✓"} tone="success">
+          <Step
+            title={simState === "HAND_IN_COMPLETED" ? "Pakket ingeleverd ✓" : "Pakket opgehaald ✓"}
+            tone="success"
+          >
             <p className="text-neutral-600">De registratie is verwerkt.</p>
             {nextParcel ? (
               <>
@@ -301,7 +327,8 @@ export function SessionPage() {
                     action.mutate({ action: simState === "HAND_IN_COMPLETED" ? "continue" : "out-continue" });
                   }}
                 >
-                  {nextParcel.direction === "HAND_IN" ? "Volgende inleveren" : "Volgende ophalen"}: {nextParcel.barcode}
+                  {nextParcel.direction === "HAND_IN" ? "Volgende inleveren" : "Volgende ophalen"}:{" "}
+                  {nextParcel.barcode}
                 </PrimaryButton>
                 <SecondaryButton
                   busy={action.isPending}
@@ -325,7 +352,7 @@ export function SessionPage() {
           </Step>
         ) : simState === "FINISHED" || session.data?.sessionStatus === "FINISHED" ? (
           <Step title="Sessie afgerond" tone="success">
-            <PrimaryButton onClick={() => navigate(backTo)}>Terug naar stop</PrimaryButton>
+            <PrimaryButton onClick={() => void navigate(backTo)}>Terug naar stop</PrimaryButton>
           </Step>
         ) : (
           <Step title="Bezig…">
@@ -339,7 +366,7 @@ export function SessionPage() {
           </p>
         )}
         {actionError != null && (
-          <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-dhl-red">{apiErrorMessage(actionError)}</p>
+          <p className="text-dhl-red mt-3 rounded-xl bg-red-50 p-3 text-sm">{apiErrorMessage(actionError)}</p>
         )}
       </QueryGate>
     </CourierLayout>
@@ -377,8 +404,8 @@ function PrimaryButton({
 }) {
   return (
     <button
-      className="min-h-12 w-full rounded-xl bg-dhl-red font-semibold text-white disabled:opacity-50"
-      disabled={busy || disabled}
+      className="bg-dhl-red min-h-12 w-full rounded-xl font-semibold text-white disabled:opacity-50"
+      disabled={!!busy || !!disabled}
       onClick={onClick}
     >
       {busy ? "Bezig…" : children}
@@ -411,13 +438,13 @@ function ParcelCard({ parcel, fallbackBarcode }: { parcel: ParcelView | null; fa
   const code = parcel?.barcode ?? fallbackBarcode;
   if (!code) return null;
   return (
-    <div className="rounded-xl border-2 border-dhl-yellow bg-amber-50 p-3 text-center">
+    <div className="border-dhl-yellow rounded-xl border-2 bg-amber-50 p-3 text-center">
       <p className="font-mono text-2xl font-bold tracking-wider">{code}</p>
       {parcel && (
         <p className="mt-1 text-sm text-neutral-600">
           {directionLabel[parcel.direction]}
-          {parcel.size && ` · maat ${parcel.size}`} · {parcel.dimensions.lengthCm}×{parcel.dimensions.widthCm}×
-          {parcel.dimensions.heightCm} cm · {(parcel.dimensions.weightG / 1000).toLocaleString("nl-NL")} kg
+          {parcel.size && ` · maat ${parcel.size}`} · {parcel.dimensions.lengthCm}×{parcel.dimensions.widthCm}
+          ×{parcel.dimensions.heightCm} cm · {(parcel.dimensions.weightG / 1000).toLocaleString("nl-NL")} kg
         </p>
       )}
     </div>
@@ -427,8 +454,8 @@ function ParcelCard({ parcel, fallbackBarcode }: { parcel: ParcelView | null; fa
 function DoorAnimation() {
   return (
     <div className="flex justify-center">
-      <div className="relative h-24 w-24 rounded-xl border-4 border-dhl-yellow">
-        <div className="absolute inset-y-0 left-0 w-1/2 origin-left animate-pulse rounded-l-lg bg-dhl-yellow/60" />
+      <div className="border-dhl-yellow relative h-24 w-24 rounded-xl border-4">
+        <div className="bg-dhl-yellow/60 absolute inset-y-0 left-0 w-1/2 origin-left animate-pulse rounded-l-lg" />
       </div>
     </div>
   );

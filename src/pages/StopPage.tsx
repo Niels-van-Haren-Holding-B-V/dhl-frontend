@@ -24,10 +24,14 @@ export function StopPage() {
           <>
             <div className="rounded-2xl bg-white p-4 shadow">
               <p className="font-semibold">{stop.address}</p>
-              <p className="mt-0.5 text-sm text-neutral-600">{locationTypeLabel[stop.deliveryLocationType]}</p>
+              <p className="mt-0.5 text-sm text-neutral-600">
+                {locationTypeLabel[stop.deliveryLocationType]}
+              </p>
             </div>
 
-            <h2 className="mt-5 mb-2 px-1 text-sm font-bold tracking-wide text-neutral-500 uppercase">Pakketten</h2>
+            <h2 className="mt-5 mb-2 px-1 text-sm font-bold tracking-wide text-neutral-500 uppercase">
+              Pakketten
+            </h2>
             <ul className="flex flex-col gap-3">
               {stop.parcels.map((parcel) => {
                 // One-tap flow: at a LOCKER stop, tapping an open parcel starts
@@ -51,7 +55,7 @@ export function StopPage() {
                       {(parcel.dimensions.weightG / 1000).toLocaleString("nl-NL")} kg
                     </p>
                     {tappable && (
-                      <p className="mt-2 text-sm font-semibold text-dhl-red">
+                      <p className="text-dhl-red mt-2 text-sm font-semibold">
                         {parcel.status === "NOT_DELIVERED"
                           ? "Tik om opnieuw te proberen ›"
                           : parcel.direction === "HAND_IN"
@@ -70,7 +74,7 @@ export function StopPage() {
                         onClick={() =>
                           createSession.mutate(stop.id, {
                             onSuccess: ({ sessionId, qrPayload }) =>
-                              navigate(`/trips/${tripId}/stops/${stopId}/session/${sessionId}`, {
+                              void navigate(`/trips/${tripId}/stops/${stopId}/session/${sessionId}`, {
                                 state: { qrPayload, barcode: parcel.barcode },
                               }),
                           })
@@ -87,7 +91,7 @@ export function StopPage() {
             </ul>
 
             {createSession.error != null && (
-              <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-dhl-red">
+              <p className="text-dhl-red mt-3 rounded-xl bg-red-50 p-3 text-sm">
                 {apiErrorMessage(createSession.error)}
               </p>
             )}

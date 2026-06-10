@@ -24,8 +24,9 @@ export function useBind() {
 }
 
 export function useDoor() {
-  return useSimMutation(({ compartmentNr, action }: { compartmentNr: number; action: DoorRequestActionEnum }) =>
-    simApi.door1({ doorRequest: { compartmentNr, action } }),
+  return useSimMutation(
+    ({ compartmentNr, action }: { compartmentNr: number; action: DoorRequestActionEnum }) =>
+      simApi.door1({ doorRequest: { compartmentNr, action } }),
   );
 }
 
