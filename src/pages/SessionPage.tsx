@@ -43,18 +43,22 @@ export function SessionPage() {
   const [manualBarcode, setManualBarcode] = useState("");
   const [manualOpen, setManualOpen] = useState(false);
   const autoFired = useRef<string | null>(null);
+  const adoptedNavParcel = useRef(false);
   const doorOpenPolls = useRef(0);
 
   const backTo = `/trips/${tripId}/stops/${stopId}`;
   const simState = session.data?.simState;
   const barcode = selected?.barcode ?? manualBarcode;
 
-  // Adopt the parcel picked on the stop page.
+  // Adopt the parcel picked on the stop page — exactly once. Re-adopting
+  // whenever nothing is selected would re-fire the auto-attempt for the
+  // first parcel after every "Volgend pakket".
   useEffect(() => {
-    if (navState?.barcode && stop && !selected) {
+    if (!adoptedNavParcel.current && navState?.barcode && stop) {
+      adoptedNavParcel.current = true;
       setSelected(stop.parcels.find((p) => p.barcode === navState.barcode) ?? null);
     }
-  }, [navState?.barcode, stop, selected]);
+  }, [navState?.barcode, stop]);
 
   // The one-tap heart: machine bound the QR → open the right door ourselves.
   useEffect(() => {
@@ -206,8 +210,9 @@ export function SessionPage() {
             {action.data?.compartment?.label && (
               <p className="text-center text-3xl font-bold">Vak {action.data.compartment.label}</p>
             )}
+            <ParcelCard parcel={selected} fallbackBarcode={barcode} />
             <p className="text-center text-neutral-600">
-              De deur is open. Plaats het pakket, sluit de deur — het scherm loopt vanzelf door.
+              De deur is open. Plaats dit pakket, sluit de deur — het scherm loopt vanzelf door.
             </p>
             {doorOpenPolls.current > DOOR_STUCK_POLLS && (
               <div className="rounded-xl bg-amber-50 p-3">
@@ -228,7 +233,8 @@ export function SessionPage() {
           </Step>
         ) : simState === "HAND_IN_AWAITING_CONFIRM" ? (
           <Step title="Deur gesloten">
-            <p className="text-neutral-600">Bevestig dat het pakket in het vak ligt.</p>
+            <ParcelCard parcel={selected} fallbackBarcode={barcode} />
+            <p className="text-neutral-600">Bevestig dat dit pakket in het vak ligt.</p>
             <PrimaryButton busy={action.isPending} onClick={() => action.mutate({ action: "confirm", barcode })}>
               Bevestig plaatsing
             </PrimaryButton>
@@ -239,7 +245,8 @@ export function SessionPage() {
             {action.data?.compartment?.label && (
               <p className="text-center text-3xl font-bold">Vak {action.data.compartment.label}</p>
             )}
-            <p className="text-center text-neutral-600">Neem het pakket eruit en sluit de deur.</p>
+            <ParcelCard parcel={selected} fallbackBarcode={barcode} />
+            <p className="text-center text-neutral-600">Neem dit pakket eruit en sluit de deur.</p>
             <SecondaryButton
               busy={action.isPending}
               onClick={() => action.mutate({ action: "report-missing", barcode })}
@@ -252,7 +259,8 @@ export function SessionPage() {
           </Step>
         ) : simState === "HAND_OUT_AWAITING_CONFIRM" ? (
           <Step title="Deur gesloten">
-            <p className="text-neutral-600">Bevestig dat je het pakket hebt meegenomen.</p>
+            <ParcelCard parcel={selected} fallbackBarcode={barcode} />
+            <p className="text-neutral-600">Bevestig dat je dit pakket hebt meegenomen.</p>
             <PrimaryButton busy={action.isPending} onClick={() => action.mutate({ action: "out-confirm", barcode })}>
               Bevestig ophalen
             </PrimaryButton>
@@ -356,6 +364,24 @@ function SecondaryButton({
     >
       {children}
     </button>
+  );
+}
+
+/** Which parcel this step is about: barcode big and scannable-by-eye, plus size/weight. */
+function ParcelCard({ parcel, fallbackBarcode }: { parcel: ParcelView | null; fallbackBarcode: string }) {
+  const code = parcel?.barcode ?? fallbackBarcode;
+  if (!code) return null;
+  return (
+    <div className="rounded-xl border-2 border-dhl-yellow bg-amber-50 p-3 text-center">
+      <p className="font-mono text-2xl font-bold tracking-wider">{code}</p>
+      {parcel && (
+        <p className="mt-1 text-sm text-neutral-600">
+          {directionLabel[parcel.direction]}
+          {parcel.size && ` · maat ${parcel.size}`} · {parcel.dimensions.lengthCm}×{parcel.dimensions.widthCm}×
+          {parcel.dimensions.heightCm} cm · {(parcel.dimensions.weightG / 1000).toLocaleString("nl-NL")} kg
+        </p>
+      )}
+    </div>
   );
 }
 
