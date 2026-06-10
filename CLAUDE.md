@@ -24,8 +24,9 @@ dhl-auth.vanharen-it.nl      # keycloak, realm `courier`
 - Vite, React 19, TypeScript strict, React Router
 - TanStack Query v5
 - Generated API client from the backend OpenAPI spec
-  (openapi-typescript + openapi-fetch; `npm run generate` against
-  https://dhl-api.vanharen-it.nl/v3/api-docs or localhost:8080 in dev;
+  (openapi-generator `typescript-axios` + axios — the technical review asks for
+  a generated client with React Query; `npm run generate` against
+  https://dhl-api.vanharen-it.nl/v3/api-docs or localhost:12080 in dev;
   commit the generated client)
 - react-oidc-context (or keycloak-js) against realm `courier` at
   https://dhl-auth.vanharen-it.nl — there is NO locker-realm token in the
