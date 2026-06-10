@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { QrCameraScanner, scannerBeep } from "../components/QrCameraScanner";
 import { useBind, useDoor, useFailureToggle, useSimReset, useSimState } from "../queries/simState";
 import { apiErrorMessage } from "../api/client";
@@ -44,57 +44,63 @@ function MachineFront({ state }: { state: SimStateSnapshot }) {
   const consoleAt = Math.floor(sorted.length / 2);
 
   return (
-    <section className="flex flex-col items-center justify-center">
-      <div className="overflow-x-auto rounded-xl border border-neutral-300 bg-neutral-200 p-3 shadow-lg">
+    <section className="flex min-h-0 flex-col">
+      <div className="flex min-h-0 grow flex-col rounded-xl border border-neutral-300 bg-neutral-200 p-3 shadow-lg">
         {/* yellow band over the full width */}
-        <div className="mb-3 flex min-h-12 items-center justify-between rounded-md bg-dhl-yellow px-4">
+        <div className="mb-3 flex min-h-12 shrink-0 items-center justify-between rounded-md bg-dhl-yellow px-4">
           <span className="rounded-sm bg-dhl-red px-2 py-0.5 text-xs font-black tracking-widest text-white">
             PAKKETAUTOMAAT
           </span>
           <span className="text-sm font-bold text-neutral-800">AMS-042 · {state.config}</span>
         </div>
-        <div className="flex items-stretch gap-2">
+        {/* columns stretch to fill whatever the machine has; door heights are
+            proportional to the real compartment sizes, nothing is hardcoded */}
+        <div className="flex min-h-0 grow items-stretch gap-2">
           {sorted.map(([col, comps], i) => (
-            <>
-              {i === consoleAt && <ConsoleColumn key="console" state={state} />}
-              <div key={col} className="flex w-24 flex-col gap-1.5">
+            <Fragment key={col}>
+              {i === consoleAt && <ConsoleColumn state={state} />}
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 {comps
                   .sort((a, b) => (a.nr ?? 0) - (b.nr ?? 0))
                   .map((c) => (
                     <Door key={c.nr} compartment={c} />
                   ))}
               </div>
-            </>
+            </Fragment>
           ))}
         </div>
       </div>
-      <div className="mt-2 h-2 w-3/4 rounded-b-xl bg-neutral-300" aria-hidden />
+      <div className="mx-auto mt-2 h-2 w-3/4 shrink-0 rounded-b-xl bg-neutral-300" aria-hidden />
     </section>
   );
 }
 
-const SIZE_HEIGHT: Record<string, string> = {
-  XXS: "h-9",
-  XS: "h-11",
-  S: "h-14",
-  M: "h-20",
-  L: "h-24",
-  XL: "h-28",
-  XXL: "h-32",
+// Relative door heights ≈ real compartment heights (ParcelSize max height cm).
+const SIZE_WEIGHT: Record<string, number> = {
+  XXS: 4,
+  XS: 8,
+  S: 12,
+  M: 20,
+  L: 28,
+  XL: 40,
+  XXL: 50,
 };
 
 function Door({ compartment: c }: { compartment: CompartmentDto }) {
   const door = useDoor();
-  const height = SIZE_HEIGHT[c.size ?? "M"];
+  const grow = SIZE_WEIGHT[c.size ?? "M"];
 
   if (c.state === "DOOR_OPEN") {
     // open door: dark-ish cavity + door panel swung out to the left
     return (
-      <div className={`relative ${height} rounded-sm bg-neutral-400 shadow-inner ring-2 ring-amber-400`}>
+      <div
+        className="relative min-h-9 basis-0 rounded-sm bg-neutral-400 shadow-inner ring-2 ring-amber-400"
+        style={{ flexGrow: grow }}
+      >
         <div className="absolute inset-y-0 left-0 w-2/5 origin-left -skew-y-6 animate-pulse rounded-sm border border-neutral-400 bg-linear-to-r from-neutral-50 to-neutral-300 shadow-md" />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
           <span className="text-[10px] font-bold text-white drop-shadow">{c.label} open</span>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap justify-center gap-1">
             <button
               className="rounded bg-dhl-yellow px-1.5 py-0.5 text-[10px] font-bold text-black shadow"
               onClick={() => door.mutate({ compartmentNr: c.nr!, action: "CLOSE" })}
@@ -125,7 +131,8 @@ function Door({ compartment: c }: { compartment: CompartmentDto }) {
 
   return (
     <div
-      className={`relative flex ${height} flex-col items-center justify-center rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-100 to-neutral-300 shadow-sm ${stateClass}`}
+      className={`relative flex min-h-9 basis-0 flex-col items-center justify-center overflow-hidden rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-100 to-neutral-300 shadow-sm ${stateClass}`}
+      style={{ flexGrow: grow }}
     >
       {/* handle */}
       <span className="absolute top-1/2 right-1 h-3 w-1 -translate-y-1/2 rounded-full bg-neutral-500/60" aria-hidden />

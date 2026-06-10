@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { CourierLayout } from "../components/CourierLayout";
@@ -6,6 +6,8 @@ import { QueryGate } from "../components/QueryGate";
 import { useLockerSession, useSessionAction, useValidate } from "../queries/lockerSession";
 import { useTrips } from "../queries/trips";
 import { apiErrorMessage } from "../api/client";
+import { directionLabel } from "../labels";
+import type { ParcelView } from "../api/types";
 import type { ValidationResultDto } from "../api/generated";
 
 // How many status polls HAND_IN_DOOR_OPEN may last before we offer the
@@ -13,15 +15,22 @@ import type { ValidationResultDto } from "../api/generated";
 const DOOR_STUCK_POLLS = 8;
 
 /**
- * The hand-in wizard. Deliberately NO client-side state machine: every render
+ * The locker wizard. Deliberately NO client-side state machine: every render
  * is one switch on the server's simState from the 1.5s status poll. Kill the
  * tab, reopen this URL, and the wizard lands on the correct step.
+ *
+ * One-tap flow: the courier picks a parcel (on the stop page or here); as
+ * soon as the machine binds the QR, the app fires validate+attempt (hand-in)
+ * or hand-out/start itself, so the right door opens without typing. The
+ * session protocol from the Locker API stays fully intact underneath.
  */
 export function SessionPage() {
   const { tripId, stopId, sessionId } = useParams();
   const navigate = useNavigate();
-  // qrPayload only exists in the create response; passed via router state.
-  const qrPayload = (useLocation().state as { qrPayload?: string } | null)?.qrPayload;
+  // qrPayload only exists in the create response; passed via router state,
+  // optionally with the parcel the courier already picked.
+  const navState = useLocation().state as { qrPayload?: string; barcode?: string } | null;
+  const qrPayload = navState?.qrPayload;
 
   const { data: trips } = useTrips();
   const stop = trips?.find((t) => t.id === tripId)?.stops.find((s) => s.id === stopId);
@@ -29,23 +38,52 @@ export function SessionPage() {
   const action = useSessionAction(sessionId!);
   const validate = useValidate(sessionId!);
 
-  const [barcode, setBarcode] = useState("");
+  const [selected, setSelected] = useState<ParcelView | null>(null);
   const [validation, setValidation] = useState<ValidationResultDto | null>(null);
+  const [manualBarcode, setManualBarcode] = useState("");
+  const [manualOpen, setManualOpen] = useState(false);
+  const autoFired = useRef<string | null>(null);
   const doorOpenPolls = useRef(0);
 
   const backTo = `/trips/${tripId}/stops/${stopId}`;
   const simState = session.data?.simState;
+  const barcode = selected?.barcode ?? manualBarcode;
 
-  if (simState === "HAND_IN_DOOR_OPEN") {
+  // Adopt the parcel picked on the stop page.
+  useEffect(() => {
+    if (navState?.barcode && stop && !selected) {
+      setSelected(stop.parcels.find((p) => p.barcode === navState.barcode) ?? null);
+    }
+  }, [navState?.barcode, stop, selected]);
+
+  // The one-tap heart: machine bound the QR → open the right door ourselves.
+  useEffect(() => {
+    if (simState !== "READY" || !selected || autoFired.current === selected.barcode) return;
+    if (action.isPending || validate.isPending) return;
+    autoFired.current = selected.barcode;
+    if (selected.direction === "HAND_IN") {
+      validate.mutate(selected.barcode, {
+        onSuccess: (result) => {
+          setValidation(result);
+          if (result.valid) action.mutate({ action: "attempt", barcode: selected.barcode });
+        },
+      });
+    } else {
+      action.mutate({ action: "out-start", barcode: selected.barcode });
+    }
+  }, [simState, selected, action, validate]);
+
+  if (simState === "HAND_IN_DOOR_OPEN" || simState === "HAND_OUT_DOOR_OPEN") {
     doorOpenPolls.current += 1;
   } else {
     doorOpenPolls.current = 0;
   }
 
   const actionError = action.error ?? validate.error;
+  const openParcels = stop?.parcels.filter((p) => p.status === "EXPECTED") ?? [];
 
   return (
-    <CourierLayout title="Lockersessie" backTo={backTo}>
+    <CourierLayout title="Pakketautomaat" backTo={backTo}>
       <QueryGate isPending={session.isPending} error={session.error}>
         {session.data?.sessionStatus === "EXPIRED" ? (
           <Step title="Sessie verlopen" tone="error">
@@ -54,6 +92,11 @@ export function SessionPage() {
           </Step>
         ) : simState === "CREATED" ? (
           <Step title="Scan de QR-code op de pakketautomaat">
+            {selected && (
+              <p className="text-center text-sm text-neutral-600">
+                {directionLabel[selected.direction]}: <span className="font-mono font-bold">{selected.barcode}</span>
+              </p>
+            )}
             {qrPayload ? (
               <>
                 <div className="flex justify-center rounded-2xl bg-white p-6 shadow">
@@ -74,46 +117,83 @@ export function SessionPage() {
             )}
           </Step>
         ) : simState === "READY" ? (
-          <Step title="Pakket inscannen">
-            <p className="text-sm text-neutral-600">
-              Verwacht op deze stop:{" "}
-              {stop?.parcels
-                .filter((p) => p.direction === "HAND_IN" && p.status === "EXPECTED")
-                .map((p) => p.barcode)
-                .join(", ") || "—"}
-            </p>
-            <input
-              className="mt-3 min-h-12 w-full rounded-xl border border-neutral-300 bg-white px-4 font-mono"
-              placeholder="Barcode (bijv. DHL-IN-001)"
-              value={barcode}
-              onChange={(e) => {
-                setBarcode(e.target.value);
-                setValidation(null);
-              }}
-              autoFocus
-            />
-            {validation && !validation.valid && (
-              <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          <Step title={selected ? "Bezig met vak openen…" : "Kies een pakket"}>
+            {validation && !validation.valid ? (
+              <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
                 {validation.suggestedSize
                   ? `Vak te klein — nieuw voorstel: ${validation.suggestedSize}`
                   : (validation.reason ?? "Barcode niet geldig voor deze sessie")}
+                <PrimaryButton
+                  busy={validate.isPending || action.isPending}
+                  onClick={() => {
+                    autoFired.current = null;
+                    setValidation(null);
+                  }}
+                >
+                  Opnieuw proberen
+                </PrimaryButton>
               </div>
-            )}
-            {validation?.valid ? (
-              <PrimaryButton
-                busy={action.isPending}
-                onClick={() => action.mutate({ action: "attempt", barcode }, { onSuccess: () => setValidation(null) })}
-              >
-                Open vak ({validation.parcelSize})
-              </PrimaryButton>
+            ) : selected ? (
+              <p className="animate-pulse text-center text-neutral-600">
+                Vak wordt geopend voor <span className="font-mono font-bold">{selected.barcode}</span>…
+              </p>
             ) : (
-              <PrimaryButton
-                busy={validate.isPending}
-                disabled={!barcode}
-                onClick={() => validate.mutate(barcode, { onSuccess: setValidation })}
-              >
-                {validation ? "Opnieuw proberen" : "Valideer barcode"}
-              </PrimaryButton>
+              <>
+                <ul className="flex flex-col gap-2">
+                  {openParcels.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        className="flex min-h-12 w-full items-center justify-between rounded-xl border border-neutral-300 bg-white px-4 text-left active:bg-neutral-50"
+                        onClick={() => {
+                          setValidation(null);
+                          setSelected(p);
+                        }}
+                      >
+                        <span className="font-mono font-semibold">{p.barcode}</span>
+                        <span className="text-sm text-neutral-600">
+                          {directionLabel[p.direction]}
+                          {p.size ? ` · ${p.size}` : ""}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                  {openParcels.length === 0 && <p className="text-neutral-500">Geen open pakketten op deze stop.</p>}
+                </ul>
+                <button className="text-sm text-neutral-500 underline" onClick={() => setManualOpen((v) => !v)}>
+                  Barcode handmatig invoeren
+                </button>
+                {manualOpen && (
+                  <div className="flex gap-2">
+                    <input
+                      className="min-h-12 grow rounded-xl border border-neutral-300 bg-white px-4 font-mono"
+                      placeholder="DHL-…"
+                      value={manualBarcode}
+                      onChange={(e) => setManualBarcode(e.target.value)}
+                    />
+                    <PrimaryButton
+                      busy={validate.isPending || action.isPending}
+                      disabled={!manualBarcode}
+                      onClick={() => {
+                        const parcel = stop?.parcels.find((p) => p.barcode === manualBarcode);
+                        setValidation(null);
+                        if (parcel) {
+                          setSelected(parcel);
+                        } else {
+                          // unknown barcode: let the backend judge it as hand-in
+                          validate.mutate(manualBarcode, {
+                            onSuccess: (result) => {
+                              setValidation(result);
+                              if (result.valid) action.mutate({ action: "attempt", barcode: manualBarcode });
+                            },
+                          });
+                        }
+                      }}
+                    >
+                      Scan
+                    </PrimaryButton>
+                  </div>
+                )}
+              </>
             )}
             <SecondaryButton busy={action.isPending} onClick={() => action.mutate({ action: "finish" })}>
               Sessie afronden
@@ -152,15 +232,41 @@ export function SessionPage() {
               Bevestig plaatsing
             </PrimaryButton>
           </Step>
-        ) : simState === "HAND_IN_COMPLETED" ? (
-          <Step title="Pakket ingeleverd ✓" tone="success">
-            <p className="text-neutral-600">De bezorging is geregistreerd.</p>
+        ) : simState === "HAND_OUT_DOOR_OPEN" ? (
+          <Step title="Neem het pakket uit het vak">
+            <DoorAnimation />
+            {action.data?.compartment?.label && (
+              <p className="text-center text-3xl font-bold">Vak {action.data.compartment.label}</p>
+            )}
+            <p className="text-center text-neutral-600">Neem het pakket eruit en sluit de deur.</p>
+            <SecondaryButton
+              busy={action.isPending}
+              onClick={() => action.mutate({ action: "report-missing", barcode })}
+            >
+              Pakket ontbreekt
+            </SecondaryButton>
+            <SecondaryButton busy={action.isPending} onClick={() => action.mutate({ action: "abort" })}>
+              Afbreken
+            </SecondaryButton>
+          </Step>
+        ) : simState === "HAND_OUT_AWAITING_CONFIRM" ? (
+          <Step title="Deur gesloten">
+            <p className="text-neutral-600">Bevestig dat je het pakket hebt meegenomen.</p>
+            <PrimaryButton busy={action.isPending} onClick={() => action.mutate({ action: "out-confirm", barcode })}>
+              Bevestig ophalen
+            </PrimaryButton>
+          </Step>
+        ) : simState === "HAND_IN_COMPLETED" || simState === "HAND_OUT_COMPLETED" ? (
+          <Step title={simState === "HAND_IN_COMPLETED" ? "Pakket ingeleverd ✓" : "Pakket opgehaald ✓"} tone="success">
+            <p className="text-neutral-600">De registratie is verwerkt.</p>
             <PrimaryButton
               busy={action.isPending}
               onClick={() => {
-                setBarcode("");
+                setSelected(null);
                 setValidation(null);
-                action.mutate({ action: "continue" });
+                setManualBarcode("");
+                autoFired.current = null;
+                action.mutate({ action: simState === "HAND_IN_COMPLETED" ? "continue" : "out-continue" });
               }}
             >
               Volgend pakket

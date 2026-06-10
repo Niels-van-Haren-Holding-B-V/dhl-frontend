@@ -34,7 +34,19 @@ export function useSessionAction(sessionId: string) {
       action,
       barcode,
     }: {
-      action: "attempt" | "confirm" | "continue" | "report-size" | "report-issue" | "reopen" | "finish";
+      action:
+        | "attempt"
+        | "confirm"
+        | "continue"
+        | "report-size"
+        | "report-issue"
+        | "reopen"
+        | "finish"
+        | "out-start"
+        | "out-confirm"
+        | "out-continue"
+        | "report-missing"
+        | "abort";
       barcode?: string;
     }): Promise<LockerActionResponse> => {
       switch (action) {
@@ -52,6 +64,16 @@ export function useSessionAction(sessionId: string) {
           return (await lockerApi.reopen1({ id: sessionId })).data;
         case "finish":
           return (await lockerApi.finish({ id: sessionId })).data;
+        case "out-start":
+          return (await lockerApi.handOutStart1({ id: sessionId, lockerActionRequest: { barcode } })).data;
+        case "out-confirm":
+          return (await lockerApi.handOutConfirm1({ id: sessionId, lockerActionRequest: { barcode } })).data;
+        case "out-continue":
+          return (await lockerApi.handOutContinue1({ id: sessionId })).data;
+        case "report-missing":
+          return (await lockerApi.reportMissing({ id: sessionId, lockerActionRequest: { barcode } })).data;
+        case "abort":
+          return (await lockerApi.abort({ id: sessionId })).data;
       }
     },
     onSettled: () => {
