@@ -91,25 +91,25 @@ function Slot({
   machineCm: number;
 }) {
   const height = `${(slotPitch(c) / machineCm) * 100}%`;
-  if (c.label === "TC") return <ConsoleSlot state={state} height={height} />;
-  if (c.label === "FC") {
-    // functional compartment — closed service module, nothing to interact with
-    return (
-      <div style={{ height }} className="rounded-sm border border-neutral-400 bg-neutral-500 shadow-inner" />
-    );
-  }
-  if (c.label === "BUS") {
-    return (
-      <div
-        style={{ height }}
-        className="flex flex-col items-center justify-center rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-200 to-neutral-400"
-      >
-        <span className="h-1.5 w-3/5 rounded-full bg-neutral-700" aria-hidden />
-        <span className="mt-0.5 text-[8px] font-bold tracking-widest text-neutral-600">BRIEVENBUS</span>
-      </div>
-    );
-  }
-  return <Door compartment={c} height={height} />;
+  // The wrapper owns the slot's exact share of the column; the padding is the
+  // visible cabinet frame between doors so adjacent doors never blend.
+  return (
+    <div style={{ height }} className="pt-[3px] first:pt-0">
+      {c.label === "TC" ? (
+        <ConsoleSlot state={state} />
+      ) : c.label === "FC" ? (
+        // functional compartment — closed service module, nothing to interact with
+        <div className="h-full rounded-sm border border-neutral-400 bg-neutral-500 shadow-inner" />
+      ) : c.label === "BUS" ? (
+        <div className="flex h-full flex-col items-center justify-center rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-200 to-neutral-400">
+          <span className="h-1.5 w-3/5 rounded-full bg-neutral-700" aria-hidden />
+          <span className="mt-0.5 text-[8px] font-bold tracking-widest text-neutral-600">BRIEVENBUS</span>
+        </div>
+      ) : (
+        <Door compartment={c} />
+      )}
+    </div>
+  );
 }
 
 /** A real machine never opens two doors; nag until the open one is shut. */
@@ -145,16 +145,13 @@ function slotPitch(c: CompartmentDto): number {
   return DOOR_PITCH_CM[c.size ?? "M"] ?? 30;
 }
 
-function Door({ compartment: c, height }: { compartment: CompartmentDto; height: string }) {
+function Door({ compartment: c }: { compartment: CompartmentDto }) {
   const door = useDoor();
 
   if (c.state === "DOOR_OPEN") {
     // open door: dark-ish cavity + door panel swung out to the left
     return (
-      <div
-        className="relative rounded-sm bg-neutral-400 shadow-inner ring-2 ring-amber-400"
-        style={{ height }}
-      >
+      <div className="relative h-full rounded-sm bg-neutral-400 shadow-inner ring-2 ring-amber-400">
         <div className="absolute inset-y-0 left-0 w-2/5 origin-left -skew-y-6 animate-pulse rounded-sm border border-neutral-400 bg-linear-to-r from-neutral-50 to-neutral-300 shadow-md" />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
           <span className="text-[10px] font-bold text-white drop-shadow">{c.label} open</span>
@@ -178,31 +175,33 @@ function Door({ compartment: c, height }: { compartment: CompartmentDto; height:
     );
   }
 
+  const occupied = c.state === "OCCUPIED";
   const stateClass =
     c.state === "RESERVED"
       ? "ring-2 ring-dhl-yellow"
       : c.state === "DEFECT"
         ? "ring-2 ring-dhl-red"
-        : c.state === "OCCUPIED"
-          ? "bg-linear-to-b from-neutral-300 to-neutral-400"
-          : "";
+        : occupied
+          ? "border-neutral-500 bg-linear-to-b from-neutral-500 to-neutral-600"
+          : "bg-linear-to-b from-neutral-100 to-neutral-300";
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center overflow-hidden rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-100 to-neutral-300 shadow-sm ${stateClass}`}
-      style={{ height }}
+      className={`relative flex h-full flex-col items-center justify-center overflow-hidden rounded-sm border border-neutral-300 shadow-sm ${stateClass}`}
     >
       {/* handle */}
       <span
-        className="absolute top-1/2 right-1 h-3 w-1 -translate-y-1/2 rounded-full bg-neutral-500/60"
+        className={`absolute top-1/2 right-1 h-3 w-1 -translate-y-1/2 rounded-full ${occupied ? "bg-neutral-300/70" : "bg-neutral-500/60"}`}
         aria-hidden
       />
-      <span className="text-[10px] font-bold text-neutral-600">
+      <span className={`text-[10px] font-bold ${occupied ? "text-white" : "text-neutral-600"}`}>
         {c.label} · {c.size}
       </span>
       {c.state === "DEFECT" && <span className="text-dhl-red text-sm font-black">✕</span>}
-      {c.state === "OCCUPIED" && c.barcode && (
-        <span className="font-mono text-[8px] text-neutral-600">{c.barcode}</span>
+      {occupied && c.barcode && (
+        <span className="mt-0.5 rounded bg-white/85 px-1 font-mono text-[8px] font-semibold text-neutral-800">
+          {c.barcode}
+        </span>
       )}
       {c.state === "RESERVED" && (
         <span className="text-[9px] font-semibold text-amber-600">gereserveerd</span>
@@ -212,7 +211,7 @@ function Door({ compartment: c, height }: { compartment: CompartmentDto; height:
 }
 
 /** The TC slot: technical compartment with screen, camera and scanner. */
-function ConsoleSlot({ state, height }: { state: SimStateSnapshot; height: string }) {
+function ConsoleSlot({ state }: { state: SimStateSnapshot }) {
   const bind = useBind();
   const [qr, setQr] = useState("");
   const [camera, setCamera] = useState(true);
@@ -242,7 +241,7 @@ function ConsoleSlot({ state, height }: { state: SimStateSnapshot; height: strin
   );
 
   return (
-    <div style={{ height }} className="bg-dhl-yellow flex flex-col items-center rounded-sm p-1 shadow-inner">
+    <div className="bg-dhl-yellow flex h-full flex-col items-center rounded-sm p-1 shadow-inner">
       {/* the screen */}
       <div className="flex min-h-0 w-full grow flex-col gap-1 overflow-y-auto rounded-md border-2 border-neutral-700/80 bg-white p-1.5 shadow-inner">
         <p className="text-center text-[11px] font-bold text-neutral-700">24/7 Pakketautomaat</p>
@@ -313,7 +312,7 @@ function ConsolePane({ state }: { state: SimStateSnapshot }) {
           onClick={() => reset.mutate()}
           disabled={reset.isPending}
         >
-          Reset
+          Reset demo
         </button>
       </header>
       <StateInspector state={state} />
