@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { lockerApi } from "../api/client";
+import { deliveryApi, lockerApi } from "../api/client";
 import type { LockerActionResponse } from "../api/generated";
 
 // Deliberately a SEPARATE short-lived query, never merged into ['trips']:
@@ -80,6 +80,24 @@ export function useSessionAction(sessionId: string) {
       void queryClient.invalidateQueries({ queryKey: ["lockerSession", sessionId] });
       void queryClient.invalidateQueries({ queryKey: ["trips"] });
     },
+  });
+}
+
+/**
+ * The "existing" registerDelivery endpoint, called directly when the locker
+ * flow dead-ends (no fitting compartment): the parcel falls back to the
+ * standard not-delivered handling.
+ */
+export function useRegisterNotDelivered(sessionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (barcode: string) =>
+      (
+        await deliveryApi.register({
+          registerDeliveryRequest: { barcode, status: "NOT_DELIVERED", sessionId },
+        })
+      ).data,
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: ["trips"] }),
   });
 }
 

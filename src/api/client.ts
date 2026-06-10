@@ -1,6 +1,11 @@
 import axios from "axios";
 import config from "../config";
-import { LockerSessionControllerApi, SimProxyControllerApi, TripControllerApi } from "./generated";
+import {
+  DeliveryControllerApi,
+  LockerSessionControllerApi,
+  SimProxyControllerApi,
+  TripControllerApi,
+} from "./generated";
 
 // The auth layer pushes the current access token here (see RequireAuth); the
 // client itself stays usable from non-React code.
@@ -22,6 +27,7 @@ http.interceptors.request.use((request) => {
 export const tripApi = new TripControllerApi(undefined, config.apiBaseUrl, http);
 export const lockerApi = new LockerSessionControllerApi(undefined, config.apiBaseUrl, http);
 export const simApi = new SimProxyControllerApi(undefined, config.apiBaseUrl, http);
+export const deliveryApi = new DeliveryControllerApi(undefined, config.apiBaseUrl, http);
 
 // Locker rejections (HTTP 422 {code, message}) the courier can act on.
 const rejectionMessages: Record<string, string> = {
@@ -30,6 +36,14 @@ const rejectionMessages: Record<string, string> = {
   UNKNOWN_PARCEL: "Dit pakket ligt niet in deze automaat.",
   COMPARTMENT_DEFECT: "Het vak meldt een storing.",
 };
+
+/** Rejection code from a 422, if any — lets the UI branch on specific refusals. */
+export function apiErrorCode(error: unknown): string | undefined {
+  if (axios.isAxiosError(error) && error.response?.status === 422) {
+    return (error.response.data as { code?: string } | undefined)?.code;
+  }
+  return undefined;
+}
 
 /** Dutch-friendly message for failed calls; 503 = open circuit breaker. */
 export function apiErrorMessage(error: unknown): string {

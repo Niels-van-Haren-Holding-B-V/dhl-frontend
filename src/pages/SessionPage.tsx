@@ -3,9 +3,14 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { CourierLayout } from "../components/CourierLayout";
 import { QueryGate } from "../components/QueryGate";
-import { useLockerSession, useSessionAction, useValidate } from "../queries/lockerSession";
+import {
+  useLockerSession,
+  useRegisterNotDelivered,
+  useSessionAction,
+  useValidate,
+} from "../queries/lockerSession";
 import { useTrips } from "../queries/trips";
-import { apiErrorMessage } from "../api/client";
+import { apiErrorCode, apiErrorMessage } from "../api/client";
 import { directionLabel } from "../labels";
 import type { ParcelView } from "../api/types";
 import type { ValidationResultDto } from "../api/generated";
@@ -37,6 +42,7 @@ export function SessionPage() {
   const session = useLockerSession(sessionId);
   const action = useSessionAction(sessionId!);
   const validate = useValidate(sessionId!);
+  const registerNotDelivered = useRegisterNotDelivered(sessionId!);
 
   const [selected, setSelected] = useState<ParcelView | null>(null);
   const [validation, setValidation] = useState<ValidationResultDto | null>(null);
@@ -87,6 +93,11 @@ export function SessionPage() {
   }, [doorIsOpen, polledAt]);
 
   const actionError = action.error ?? validate.error;
+  // Escalation dead-end: the machine has no free door big enough, not even
+  // after size escalation — the parcel cannot be delivered here.
+  const cannotDeliver =
+    (validation != null && !validation.valid && validation.reason === "NO_CAPACITY") ||
+    apiErrorCode(action.error) === "NO_COMPARTMENT_AVAILABLE";
   const openParcels =
     stop?.parcels.filter((p) => p.status === "EXPECTED" || p.status === "NOT_DELIVERED") ?? [];
   // What is still to do, beyond the parcel currently in the doors. The trips
@@ -131,7 +142,41 @@ export function SessionPage() {
           </Step>
         ) : simState === "READY" ? (
           <Step title={selected ? "Bezig met vak openen…" : "Kies een pakket"}>
-            {validation && !validation.valid ? (
+            {cannotDeliver ? (
+              <div className="flex flex-col gap-3 rounded-xl bg-red-50 p-3">
+                <p className="text-dhl-red text-sm font-semibold">
+                  Geen passend vak beschikbaar — ook het grootste vrije vak is te klein. Dit pakket kan niet
+                  in deze automaat bezorgd worden.
+                </p>
+                <PrimaryButton
+                  busy={registerNotDelivered.isPending}
+                  onClick={() => {
+                    registerNotDelivered.mutate(barcode, {
+                      onSuccess: () => {
+                        setSelected(null);
+                        setValidation(null);
+                        autoFired.current = null;
+                        action.reset();
+                        validate.reset();
+                      },
+                    });
+                  }}
+                >
+                  Registreer als niet bezorgd
+                </PrimaryButton>
+                <SecondaryButton
+                  onClick={() => {
+                    setSelected(null);
+                    setValidation(null);
+                    autoFired.current = null;
+                    action.reset();
+                    validate.reset();
+                  }}
+                >
+                  Ander pakket kiezen
+                </SecondaryButton>
+              </div>
+            ) : validation && !validation.valid ? (
               <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
                 {validation.suggestedSize
                   ? `Vak te klein — nieuw voorstel: ${validation.suggestedSize}`
@@ -261,7 +306,24 @@ export function SessionPage() {
                 </div>
               </div>
             )}
-            <SecondaryButton busy={action.isPending} onClick={() => action.mutate({ action: "report-size" })}>
+            <SecondaryButton
+              busy={action.isPending}
+              onClick={() =>
+                // The sim remembers the reported size; clearing the auto-fire
+                // guard makes the wizard re-attempt at once, so the next
+                // bigger free door opens (S → M → … → XXL). When nothing
+                // fits anymore the cannot-deliver screen takes over.
+                action.mutate(
+                  { action: "report-size" },
+                  {
+                    onSuccess: () => {
+                      autoFired.current = null;
+                      setValidation(null);
+                    },
+                  },
+                )
+              }
+            >
               Vak te klein
             </SecondaryButton>
           </Step>
