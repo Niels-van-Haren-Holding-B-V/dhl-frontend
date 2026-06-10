@@ -86,6 +86,10 @@ export function SessionPage() {
   const actionError = action.error ?? validate.error;
   const openParcels =
     stop?.parcels.filter((p) => p.status === "EXPECTED" || p.status === "NOT_DELIVERED") ?? [];
+  // What is still to do, beyond the parcel currently in the doors. The trips
+  // query may lag a confirm by a few seconds, so exclude the current barcode.
+  const remainingParcels = openParcels.filter((p) => p.barcode !== selected?.barcode);
+  const nextParcel = remainingParcels[0] ?? null;
 
   return (
     <CourierLayout title="Pakketautomaat" backTo={backTo}>
@@ -139,9 +143,10 @@ export function SessionPage() {
                 </PrimaryButton>
               </div>
             ) : selected ? (
-              <p className="animate-pulse text-center text-neutral-600">
-                Vak wordt geopend voor <span className="font-mono font-bold">{selected.barcode}</span>…
-              </p>
+              <>
+                <ParcelCard parcel={selected} fallbackBarcode={selected.barcode} />
+                <p className="animate-pulse text-center text-neutral-600">Pak dit pakket — het vak wordt geopend…</p>
+              </>
             ) : (
               <>
                 <ul className="flex flex-col gap-2">
@@ -268,18 +273,40 @@ export function SessionPage() {
         ) : simState === "HAND_IN_COMPLETED" || simState === "HAND_OUT_COMPLETED" ? (
           <Step title={simState === "HAND_IN_COMPLETED" ? "Pakket ingeleverd ✓" : "Pakket opgehaald ✓"} tone="success">
             <p className="text-neutral-600">De registratie is verwerkt.</p>
-            <PrimaryButton
-              busy={action.isPending}
-              onClick={() => {
-                setSelected(null);
-                setValidation(null);
-                setManualBarcode("");
-                autoFired.current = null;
-                action.mutate({ action: simState === "HAND_IN_COMPLETED" ? "continue" : "out-continue" });
-              }}
-            >
-              Volgend pakket
-            </PrimaryButton>
+            {nextParcel ? (
+              <>
+                <p className="text-sm font-semibold text-neutral-700">
+                  Volgende voor deze stop ({remainingParcels.length} te gaan):
+                </p>
+                <ParcelCard parcel={nextParcel} fallbackBarcode={nextParcel.barcode} />
+                <PrimaryButton
+                  busy={action.isPending}
+                  onClick={() => {
+                    setValidation(null);
+                    setManualBarcode("");
+                    setSelected(nextParcel);
+                    autoFired.current = null;
+                    action.mutate({ action: simState === "HAND_IN_COMPLETED" ? "continue" : "out-continue" });
+                  }}
+                >
+                  {nextParcel.direction === "HAND_IN" ? "Volgende inleveren" : "Volgende ophalen"}: {nextParcel.barcode}
+                </PrimaryButton>
+                <SecondaryButton
+                  busy={action.isPending}
+                  onClick={() => {
+                    setSelected(null);
+                    setValidation(null);
+                    setManualBarcode("");
+                    autoFired.current = null;
+                    action.mutate({ action: simState === "HAND_IN_COMPLETED" ? "continue" : "out-continue" });
+                  }}
+                >
+                  Ander pakket kiezen
+                </SecondaryButton>
+              </>
+            ) : (
+              <p className="text-sm text-neutral-600">Alle pakketten voor deze stop zijn afgehandeld.</p>
+            )}
             <SecondaryButton busy={action.isPending} onClick={() => action.mutate({ action: "finish" })}>
               Sessie afronden
             </SecondaryButton>
