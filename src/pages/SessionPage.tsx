@@ -145,7 +145,19 @@ export function SessionPage() {
             ) : selected ? (
               <>
                 <ParcelCard parcel={selected} fallbackBarcode={selected.barcode} />
-                <p className="animate-pulse text-center text-neutral-600">Pak dit pakket — het vak wordt geopend…</p>
+                {actionError != null ? (
+                  <PrimaryButton
+                    onClick={() => {
+                      autoFired.current = null;
+                      action.reset();
+                      validate.reset();
+                    }}
+                  >
+                    Opnieuw proberen
+                  </PrimaryButton>
+                ) : (
+                  <p className="animate-pulse text-center text-neutral-600">Pak dit pakket — het vak wordt geopend…</p>
+                )}
               </>
             ) : (
               <>

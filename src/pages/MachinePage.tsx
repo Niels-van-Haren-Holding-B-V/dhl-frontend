@@ -53,13 +53,15 @@ function MachineFront({ state }: { state: SimStateSnapshot }) {
           </span>
           <span className="text-sm font-bold text-neutral-800">AMS-042 · {state.config}</span>
         </div>
+        <OpenDoorBanner state={state} />
         {/* columns stretch to fill whatever the machine has; door heights are
             proportional to the real compartment sizes, nothing is hardcoded */}
         <div className="flex min-h-0 grow items-stretch gap-2">
           {sorted.map(([col, comps], i) => (
             <Fragment key={col}>
               {i === consoleAt && <ConsoleColumn state={state} />}
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              {/* no gap: door heights are exact percentages of the column */}
+              <div className="flex min-w-0 flex-1 flex-col">
                 {comps
                   .sort((a, b) => (a.nr ?? 0) - (b.nr ?? 0))
                   .map((c) => (
@@ -75,27 +77,47 @@ function MachineFront({ state }: { state: SimStateSnapshot }) {
   );
 }
 
-// Relative door heights ≈ real compartment heights (ParcelSize max height cm).
-const SIZE_WEIGHT: Record<string, number> = {
-  XXS: 4,
-  XS: 8,
-  S: 12,
-  M: 20,
-  L: 28,
-  XL: 40,
-  XXL: 50,
+/** A real machine never opens two doors; nag until the open one is shut. */
+function OpenDoorBanner({ state }: { state: SimStateSnapshot }) {
+  const open = (state.compartments ?? []).filter((c) => c.state === "DOOR_OPEN");
+  if (open.length === 0) return null;
+  return (
+    <div className="mb-3 flex shrink-0 items-center gap-2 rounded-md border-2 border-amber-400 bg-amber-100 px-4 py-2 font-semibold text-amber-900">
+      <span aria-hidden>⚠</span>
+      Sluit eerst {open.length === 1 ? "vak" : "vakken"} {open.map((c) => c.label).join(", ")} voordat een volgend vak
+      kan openen.
+    </div>
+  );
+}
+
+// Door pitch per size in cm — MUST mirror LockerConfigurations.DOOR_PITCH_CM
+// in the backend; every column sums to exactly COLUMN_HEIGHT_CM (150), so
+// rendering each door at pitch/150 of the column height is true to scale:
+// an XS is a minor postal parcel, never taller than an S.
+const DOOR_PITCH_CM: Record<string, number> = {
+  XXS: 10,
+  XS: 15,
+  S: 20,
+  M: 30,
+  L: 40,
+  XL: 55,
+  XXL: 75,
 };
+const COLUMN_HEIGHT_CM = 150;
+
+function doorHeight(size: string | undefined): string {
+  return `${((DOOR_PITCH_CM[size ?? "M"] ?? 30) / COLUMN_HEIGHT_CM) * 100}%`;
+}
 
 function Door({ compartment: c }: { compartment: CompartmentDto }) {
   const door = useDoor();
-  const grow = SIZE_WEIGHT[c.size ?? "M"];
 
   if (c.state === "DOOR_OPEN") {
     // open door: dark-ish cavity + door panel swung out to the left
     return (
       <div
-        className="relative min-h-9 basis-0 rounded-sm bg-neutral-400 shadow-inner ring-2 ring-amber-400"
-        style={{ flexGrow: grow }}
+        className="relative rounded-sm bg-neutral-400 shadow-inner ring-2 ring-amber-400"
+        style={{ height: doorHeight(c.size) }}
       >
         <div className="absolute inset-y-0 left-0 w-2/5 origin-left -skew-y-6 animate-pulse rounded-sm border border-neutral-400 bg-linear-to-r from-neutral-50 to-neutral-300 shadow-md" />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
@@ -131,8 +153,8 @@ function Door({ compartment: c }: { compartment: CompartmentDto }) {
 
   return (
     <div
-      className={`relative flex min-h-9 basis-0 flex-col items-center justify-center overflow-hidden rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-100 to-neutral-300 shadow-sm ${stateClass}`}
-      style={{ flexGrow: grow }}
+      className={`relative flex flex-col items-center justify-center overflow-hidden rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-100 to-neutral-300 shadow-sm ${stateClass}`}
+      style={{ height: doorHeight(c.size) }}
     >
       {/* handle */}
       <span className="absolute top-1/2 right-1 h-3 w-1 -translate-y-1/2 rounded-full bg-neutral-500/60" aria-hidden />
