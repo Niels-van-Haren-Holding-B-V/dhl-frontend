@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { QrCameraScanner, scannerBeep } from "../components/QrCameraScanner";
 import { useBind, useDoor, useFailureToggle, useSimReset, useSimState } from "../queries/simState";
 import { apiErrorMessage } from "../api/client";
@@ -40,8 +40,9 @@ function MachineFront({ state }: { state: SimStateSnapshot }) {
     columns.set(col, [...(columns.get(col) ?? []), c]);
   }
   const sorted = [...columns.entries()].sort(([a], [b]) => a - b);
-  // The console column sits in the middle of the machine, like the real one.
-  const consoleAt = Math.floor(sorted.length / 2);
+  // Columns differ in total pitch; the machine is as tall as its tallest
+  // column and shorter columns get a filler panel at the bottom.
+  const machineCm = Math.max(...sorted.map(([, comps]) => comps.reduce((sum, c) => sum + slotPitch(c), 0)), 1);
 
   return (
     <section className="flex min-h-0 flex-col">
@@ -54,27 +55,45 @@ function MachineFront({ state }: { state: SimStateSnapshot }) {
           <span className="text-sm font-bold text-neutral-800">AMS-042 · {state.config}</span>
         </div>
         <OpenDoorBanner state={state} />
-        {/* columns stretch to fill whatever the machine has; door heights are
-            proportional to the real compartment sizes, nothing is hardcoded */}
-        <div className="flex min-h-0 grow items-stretch gap-2">
-          {sorted.map(([col, comps], i) => (
-            <Fragment key={col}>
-              {i === consoleAt && <ConsoleColumn state={state} />}
-              {/* no gap: door heights are exact percentages of the column */}
-              <div className="flex min-w-0 flex-1 flex-col">
-                {comps
-                  .sort((a, b) => (a.nr ?? 0) - (b.nr ?? 0))
-                  .map((c) => (
-                    <Door key={c.nr} compartment={c} />
-                  ))}
-              </div>
-            </Fragment>
+        <div className="flex min-h-0 grow items-stretch gap-1">
+          {sorted.map(([col, comps]) => (
+            // no vertical gaps: slot heights are exact percentages of the column
+            <div key={col} className="flex min-w-0 flex-1 flex-col">
+              {comps
+                .sort((a, b) => (a.nr ?? 0) - (b.nr ?? 0))
+                .map((c) => (
+                  <Slot key={c.nr} compartment={c} state={state} machineCm={machineCm} />
+                ))}
+              <div className="grow rounded-b-sm bg-neutral-300/60" aria-hidden />
+            </div>
           ))}
         </div>
       </div>
       <div className="mx-auto mt-2 h-2 w-3/4 shrink-0 rounded-b-xl bg-neutral-300" aria-hidden />
     </section>
   );
+}
+
+/** One column slot: a courier door, the brievenbus, or an embedded module. */
+function Slot({ compartment: c, state, machineCm }: { compartment: CompartmentDto; state: SimStateSnapshot; machineCm: number }) {
+  const height = `${(slotPitch(c) / machineCm) * 100}%`;
+  if (c.label === "TC") return <ConsoleSlot state={state} height={height} />;
+  if (c.label === "FC") {
+    // functional compartment — closed service module, nothing to interact with
+    return <div style={{ height }} className="rounded-sm border border-neutral-400 bg-neutral-500 shadow-inner" />;
+  }
+  if (c.label === "BUS") {
+    return (
+      <div
+        style={{ height }}
+        className="flex flex-col items-center justify-center rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-200 to-neutral-400"
+      >
+        <span className="h-1.5 w-3/5 rounded-full bg-neutral-700" aria-hidden />
+        <span className="mt-0.5 text-[8px] font-bold tracking-widest text-neutral-600">BRIEVENBUS</span>
+      </div>
+    );
+  }
+  return <Door compartment={c} height={height} />;
 }
 
 /** A real machine never opens two doors; nag until the open one is shut. */
@@ -90,10 +109,10 @@ function OpenDoorBanner({ state }: { state: SimStateSnapshot }) {
   );
 }
 
-// Door pitch per size in cm — MUST mirror LockerConfigurations.DOOR_PITCH_CM
-// in the backend; every column sums to exactly COLUMN_HEIGHT_CM (150), so
-// rendering each door at pitch/150 of the column height is true to scale:
-// an XS is a minor postal parcel, never taller than an S.
+// Door pitch per size in cm — keep mirrored with the template door sizes in
+// the backend (LockerConfigurations). Rendering each slot at pitch/machine
+// height keeps everything true to scale: an XS is a minor postal parcel,
+// never taller than an S. TC/FC modules get a fixed module pitch.
 const DOOR_PITCH_CM: Record<string, number> = {
   XXS: 10,
   XS: 15,
@@ -103,13 +122,14 @@ const DOOR_PITCH_CM: Record<string, number> = {
   XL: 55,
   XXL: 75,
 };
-const COLUMN_HEIGHT_CM = 150;
+const MODULE_PITCH_CM = 45;
 
-function doorHeight(size: string | undefined): string {
-  return `${((DOOR_PITCH_CM[size ?? "M"] ?? 30) / COLUMN_HEIGHT_CM) * 100}%`;
+function slotPitch(c: CompartmentDto): number {
+  if (c.label === "TC" || c.label === "FC") return MODULE_PITCH_CM;
+  return DOOR_PITCH_CM[c.size ?? "M"] ?? 30;
 }
 
-function Door({ compartment: c }: { compartment: CompartmentDto }) {
+function Door({ compartment: c, height }: { compartment: CompartmentDto; height: string }) {
   const door = useDoor();
 
   if (c.state === "DOOR_OPEN") {
@@ -117,7 +137,7 @@ function Door({ compartment: c }: { compartment: CompartmentDto }) {
     return (
       <div
         className="relative rounded-sm bg-neutral-400 shadow-inner ring-2 ring-amber-400"
-        style={{ height: doorHeight(c.size) }}
+        style={{ height }}
       >
         <div className="absolute inset-y-0 left-0 w-2/5 origin-left -skew-y-6 animate-pulse rounded-sm border border-neutral-400 bg-linear-to-r from-neutral-50 to-neutral-300 shadow-md" />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
@@ -154,7 +174,7 @@ function Door({ compartment: c }: { compartment: CompartmentDto }) {
   return (
     <div
       className={`relative flex flex-col items-center justify-center overflow-hidden rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-100 to-neutral-300 shadow-sm ${stateClass}`}
-      style={{ height: doorHeight(c.size) }}
+      style={{ height }}
     >
       {/* handle */}
       <span className="absolute top-1/2 right-1 h-3 w-1 -translate-y-1/2 rounded-full bg-neutral-500/60" aria-hidden />
@@ -170,7 +190,8 @@ function Door({ compartment: c }: { compartment: CompartmentDto }) {
   );
 }
 
-function ConsoleColumn({ state }: { state: SimStateSnapshot }) {
+/** The TC slot: technical compartment with screen, camera and scanner. */
+function ConsoleSlot({ state, height }: { state: SimStateSnapshot; height: string }) {
   const bind = useBind();
   const [qr, setQr] = useState("");
   const [camera, setCamera] = useState(true);
@@ -200,9 +221,9 @@ function ConsoleColumn({ state }: { state: SimStateSnapshot }) {
   );
 
   return (
-    <div className="flex w-44 shrink-0 flex-col items-center gap-2 rounded-sm bg-dhl-yellow p-2 shadow-inner">
+    <div style={{ height }} className="flex flex-col items-center rounded-sm bg-dhl-yellow p-1 shadow-inner">
       {/* the screen */}
-      <div className="flex w-full grow flex-col gap-2 rounded-md border-4 border-neutral-700/80 bg-white p-2 shadow-inner">
+      <div className="flex min-h-0 w-full grow flex-col gap-1 overflow-y-auto rounded-md border-2 border-neutral-700/80 bg-white p-1.5 shadow-inner">
         <p className="text-center text-[11px] font-bold text-neutral-700">24/7 Pakketautomaat</p>
         {splash ? (
           <p className="my-auto text-center text-lg font-black text-green-600">Gekoppeld ✓</p>
@@ -253,8 +274,6 @@ function ConsoleColumn({ state }: { state: SimStateSnapshot }) {
           </>
         )}
       </div>
-      {/* parcel chute below the screen */}
-      <div className="h-10 w-full rounded-sm bg-neutral-600/80 shadow-inner" aria-hidden />
     </div>
   );
 }
