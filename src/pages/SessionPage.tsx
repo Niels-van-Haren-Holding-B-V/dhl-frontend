@@ -80,7 +80,8 @@ export function SessionPage() {
   }
 
   const actionError = action.error ?? validate.error;
-  const openParcels = stop?.parcels.filter((p) => p.status === "EXPECTED") ?? [];
+  const openParcels =
+    stop?.parcels.filter((p) => p.status === "EXPECTED" || p.status === "NOT_DELIVERED") ?? [];
 
   return (
     <CourierLayout title="Pakketautomaat" backTo={backTo}>

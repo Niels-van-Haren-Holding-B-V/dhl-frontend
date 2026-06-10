@@ -32,8 +32,12 @@ export function StopPage() {
               {stop.parcels.map((parcel) => {
                 // One-tap flow: at a LOCKER stop, tapping an open parcel starts
                 // the session for exactly that parcel; after the machine scans
-                // the QR the right door opens by itself.
-                const tappable = stop.deliveryLocationType === "LOCKER" && parcel.status === "EXPECTED";
+                // the QR the right door opens by itself. NOT_DELIVERED stays
+                // tappable: the reaper parks abandoned sessions there and a
+                // courier must be able to retry.
+                const tappable =
+                  stop.deliveryLocationType === "LOCKER" &&
+                  (parcel.status === "EXPECTED" || parcel.status === "NOT_DELIVERED");
                 const body = (
                   <>
                     <div className="flex items-center justify-between gap-2">
@@ -48,7 +52,11 @@ export function StopPage() {
                     </p>
                     {tappable && (
                       <p className="mt-2 text-sm font-semibold text-dhl-red">
-                        {parcel.direction === "HAND_IN" ? "Tik om in te leveren ›" : "Tik om op te halen ›"}
+                        {parcel.status === "NOT_DELIVERED"
+                          ? "Tik om opnieuw te proberen ›"
+                          : parcel.direction === "HAND_IN"
+                            ? "Tik om in te leveren ›"
+                            : "Tik om op te halen ›"}
                       </p>
                     )}
                   </>
