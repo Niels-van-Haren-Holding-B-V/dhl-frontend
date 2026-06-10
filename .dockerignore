@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.github
+deploy/k8s
+*.md
+.DS_Store
+*.tsbuildinfo
