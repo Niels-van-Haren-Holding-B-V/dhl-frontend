@@ -78,28 +78,10 @@ export function StopPage() {
               })}
             </ul>
 
-            {stop.deliveryLocationType === "LOCKER" && (
-              <>
-                <button
-                  className="mt-5 min-h-12 w-full rounded-xl bg-dhl-red font-semibold text-white disabled:opacity-50"
-                  disabled={createSession.isPending}
-                  onClick={() =>
-                    createSession.mutate(stop.id, {
-                      onSuccess: ({ sessionId, qrPayload }) =>
-                        navigate(`/trips/${tripId}/stops/${stopId}/session/${sessionId}`, {
-                          state: { qrPayload },
-                        }),
-                    })
-                  }
-                >
-                  {createSession.isPending ? "Bezig…" : "Start lockersessie"}
-                </button>
-                {createSession.error != null && (
-                  <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-dhl-red">
-                    {apiErrorMessage(createSession.error)}
-                  </p>
-                )}
-              </>
+            {createSession.error != null && (
+              <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-dhl-red">
+                {apiErrorMessage(createSession.error)}
+              </p>
             )}
           </>
         )}
