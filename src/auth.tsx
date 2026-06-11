@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { AuthProvider as OidcProvider, useAuth } from "react-oidc-context";
 import config from "./config";
-import { setAccessToken } from "./api/client";
+import { setAccessToken, setOnUnauthorized } from "./api/client";
 
 const oidcConfig = {
   authority: `${config.authUrl}/realms/${config.authRealm}`,
@@ -28,22 +28,38 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     setAccessToken(auth.user?.access_token);
   }, [auth.user?.access_token]);
 
+  // The API answered 401 (expired/invalidated token mid-session): sign in
+  // again — with a live Keycloak SSO cookie this round-trips seamlessly.
+  useEffect(() => {
+    setOnUnauthorized(() => void auth.signinRedirect());
+    return () => setOnUnauthorized(undefined);
+  }, [auth]);
+
   useEffect(() => {
     if (!auth.isLoading && !auth.isAuthenticated && !auth.error && !auth.activeNavigator) {
       void auth.signinRedirect();
     }
   }, [auth, auth.isLoading, auth.isAuthenticated, auth.error, auth.activeNavigator]);
 
+  // Token renewal can fail transiently (laptop slept, network blip, Keycloak
+  // restarted). Don't park the user on an error screen: retry the login
+  // automatically after a moment; the button stays as a manual escape.
+  useEffect(() => {
+    if (!auth.error || auth.isLoading || auth.activeNavigator) return;
+    const timer = setTimeout(() => void auth.signinRedirect(), 2000);
+    return () => clearTimeout(timer);
+  }, [auth, auth.error, auth.isLoading, auth.activeNavigator]);
+
   if (auth.error) {
     return (
       <Splash>
-        <p className="text-dhl-red font-semibold">Inloggen mislukt</p>
-        <p className="mt-1 text-sm text-neutral-600">{auth.error.message}</p>
+        <p className="font-semibold text-neutral-800">Sessie verlopen</p>
+        <p className="mt-1 animate-pulse text-sm text-neutral-600">Je wordt opnieuw aangemeld…</p>
         <button
           className="bg-dhl-red mt-4 min-h-12 rounded-xl px-6 font-semibold text-white"
           onClick={() => void auth.signinRedirect()}
         >
-          Opnieuw proberen
+          Nu opnieuw inloggen
         </button>
       </Splash>
     );

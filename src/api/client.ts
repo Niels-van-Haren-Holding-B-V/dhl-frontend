@@ -15,6 +15,16 @@ export function setAccessToken(token: string | undefined) {
   accessToken = token;
 }
 
+// The auth layer registers a re-login handler; a 401 means the token expired
+// or was invalidated server-side (e.g. Keycloak restart) — trigger it once.
+let onUnauthorized: (() => void) | undefined;
+let reauthTriggered = false;
+
+export function setOnUnauthorized(handler: (() => void) | undefined) {
+  onUnauthorized = handler;
+  reauthTriggered = false;
+}
+
 export const http = axios.create();
 
 http.interceptors.request.use((request) => {
@@ -22,6 +32,14 @@ http.interceptors.request.use((request) => {
     request.headers.Authorization = `Bearer ${accessToken}`;
   }
   return request;
+});
+
+http.interceptors.response.use(undefined, (error: unknown) => {
+  if (axios.isAxiosError(error) && error.response?.status === 401 && onUnauthorized && !reauthTriggered) {
+    reauthTriggered = true;
+    onUnauthorized();
+  }
+  return Promise.reject(error instanceof Error ? error : new Error(String(error)));
 });
 
 export const tripApi = new TripControllerApi(undefined, config.apiBaseUrl, http);
