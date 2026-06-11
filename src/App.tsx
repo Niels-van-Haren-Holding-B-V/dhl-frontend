@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import config from "./config";
 import { RequireAuth } from "./auth";
 import { TripListPage } from "./pages/TripListPage";
@@ -23,17 +23,12 @@ export function App() {
           </RequireAuth>
         }
       />
+      {/* No redirect here: a redirect at / would strip the ?code&state of the
+          OIDC callback before the library exchanges it (login loop). On the
+          locker hostname / simply IS the machine page. */}
       <Route
         path="/"
-        element={
-          isMachineHost ? (
-            <Navigate to="/machine" replace />
-          ) : (
-            <RequireAuth>
-              <TripListPage />
-            </RequireAuth>
-          )
-        }
+        element={<RequireAuth>{isMachineHost ? <MachinePage /> : <TripListPage />}</RequireAuth>}
       />
       <Route
         path="/trips/:tripId"

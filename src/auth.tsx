@@ -6,7 +6,10 @@ import { setAccessToken } from "./api/client";
 const oidcConfig = {
   authority: `${config.authUrl}/realms/${config.authRealm}`,
   client_id: config.authClientId,
-  redirect_uri: `${window.location.origin}/`,
+  // Return to the page the login started on (the realm allows origin/*) —
+  // landing somewhere else invites client-side redirects that strip the
+  // ?code&state before the library exchanges them (login loop).
+  redirect_uri: `${window.location.origin}${window.location.pathname}`,
   // Strip the ?code=&state= params Keycloak appends after the redirect.
   onSigninCallback: () => {
     window.history.replaceState({}, "", window.location.pathname);
