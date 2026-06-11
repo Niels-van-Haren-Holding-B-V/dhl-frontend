@@ -13,7 +13,7 @@ export function App() {
 
   return (
     <Routes>
-      {/* The machine page authenticates too (same demo courier user) but has
+      {/* The machine page authenticates with the same courier user but has
           its own kiosk shell — no shared nav with the courier app. */}
       <Route
         path="/machine"

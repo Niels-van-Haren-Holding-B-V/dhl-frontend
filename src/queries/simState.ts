@@ -41,9 +41,9 @@ export function useSimReset() {
 }
 
 /**
- * Demo stand-in for the upstream planning system: the announcement goes onto
- * the parcel-intake Kafka topic and is ingested asynchronously — the parcel
- * shows up in the courier app via the regular trips refresh a moment later.
+ * Stand-in for the upstream planning system: the announcement goes onto the
+ * parcel-intake Kafka topic and is ingested asynchronously — the parcel shows
+ * up in the courier app via the regular trips refresh a moment later.
  */
 export function useAnnounceParcel() {
   const queryClient = useQueryClient();

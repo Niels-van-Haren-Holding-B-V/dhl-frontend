@@ -14,11 +14,11 @@ import type { CompartmentDto, SimStateSnapshot } from "../api/generated";
 import { FailureRequestModeEnum, type SimSessionDtoStateEnum } from "../api/generated";
 
 /**
- * Parcel machine page: schematic front view of a DHL-style locker (yellow
- * band, light grey doors, console column in the middle) + operator console.
- * The page authenticates with the same demo courier user and talks only to
- * the backend passthroughs at /api/sim/** — acceptable for a demo; a real
- * machine would have its own identity in the locker realm.
+ * Parcel machine page: schematic front view of the locker (yellow band,
+ * light grey doors, console column in the middle) + operator console. The
+ * page authenticates with the courier user and talks only to the backend
+ * passthroughs at /api/sim/**; a real machine would have its own identity
+ * in the locker realm.
  */
 export function MachinePage() {
   const { data, isPending, error } = useSimState();
@@ -211,7 +211,14 @@ function Door({ compartment: c }: { compartment: CompartmentDto }) {
         </span>
       )}
       {c.state === "RESERVED" && (
-        <span className="text-[9px] font-semibold text-amber-600">gereserveerd</span>
+        <>
+          <span className="text-[9px] font-semibold text-amber-600">gereserveerd</span>
+          {c.barcode && (
+            <span className="mt-0.5 rounded bg-amber-100 px-1 font-mono text-[8px] font-semibold text-amber-800">
+              {c.barcode}
+            </span>
+          )}
+        </>
       )}
     </div>
   );
@@ -443,11 +450,10 @@ function FailurePanel({ state }: { state: SimStateSnapshot }) {
 }
 
 /**
- * Demo stand-in for the upstream planning system ("Pakketten komen binnen via
- * Kafka-ingestie"): announces a parcel via the backend, which publishes it to
- * the parcel-intake topic; the Kafka consumer ingests it and the courier app
- * picks it up on the next trips refresh. The frontend only talks to our
- * backend — Kafka stays server-side.
+ * Stand-in for the upstream planning system: announces a parcel via the
+ * backend, which publishes it to the parcel-intake topic; the Kafka consumer
+ * ingests it and the courier app picks it up on the next trips refresh. The
+ * frontend only talks to our backend — Kafka stays server-side.
  */
 function AnnounceParcelPanel() {
   const announce = useAnnounceParcel();
@@ -506,7 +512,7 @@ function AnnounceParcelPanel() {
       </div>
       {announce.isSuccess && (
         <p className="mt-2 text-xs font-semibold text-green-700">
-          Aangemeld via Kafka — verschijnt zo bij de stop in de koeriers-app.
+          Aangemeld via Kafka — vak gereserveerd op de automaat, verschijnt zo in de koeriers-app.
         </p>
       )}
       {announce.error != null && (

@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deliveryApi, lockerApi } from "../api/client";
 import type { LockerActionResponse } from "../api/generated";
 
-// Deliberately a SEPARATE short-lived query, never merged into ['trips']:
-// the trips list refreshes at its own 5s pace; an active locker session
-// needs a much tighter 1.5s loop and disappears when the session ends.
+// Separate short-lived query, never merged into ['trips']: the trips list
+// refreshes at its own 5s pace; an active locker session needs a tighter
+// 1.5s loop and disappears when the session ends.
 export function useLockerSession(sessionId: string | undefined) {
   return useQuery({
     queryKey: ["lockerSession", sessionId],
