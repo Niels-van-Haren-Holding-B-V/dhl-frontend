@@ -4,7 +4,7 @@ import { RequireAuth } from "./auth";
 import { TripListPage } from "./pages/TripListPage";
 import { TripDetailPage } from "./pages/TripDetailPage";
 import { StopPage } from "./pages/StopPage";
-import { SessionPage } from "./pages/SessionPage";
+import { SessionPage } from "./pages/session/SessionPage";
 import { MachinePage } from "./pages/MachinePage";
 
 export function App() {

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { apiErrorMessage } from "../api/client";
 
 /** Uniform loading/error rendering around a TanStack Query result. */
 export function QueryGate({
@@ -17,7 +18,7 @@ export function QueryGate({
     return (
       <div className="rounded-2xl bg-white p-4 shadow">
         <p className="text-dhl-red font-semibold">Er ging iets mis</p>
-        <p className="mt-1 text-sm text-neutral-600">{error.message}</p>
+        <p className="mt-1 text-sm text-neutral-600">{apiErrorMessage(error)}</p>
       </div>
     );
   }
