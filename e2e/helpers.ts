@@ -20,15 +20,19 @@ export async function gotoLockerStop(courier: Page) {
   await courier.goto("/");
   await courier.getByText("Route Amsterdam-Zuid").click();
   await courier.getByText("Naar pakketautomaat").click();
-  await expect(courier.getByText("Pakketten")).toBeVisible();
+  await expect(courier.getByRole("heading", { name: "Pakketten" })).toBeVisible();
 }
 
 /** Tap a parcel, read the session QR payload, bind it manually on the machine. */
 export async function startSessionFor(courier: Page, machine: Page, barcode: string) {
   await courier.getByRole("button", { name: new RegExp(barcode) }).click();
   const qrPayload = await courier.getByTestId("qr-payload").textContent({ timeout: 15_000 });
-  await machine.getByText("Handmatig invoeren").click();
-  await machine.getByLabel("Scan QR-code van de koerier").fill(qrPayload!);
+  // the console remembers manual mode between sessions: toggle only if needed
+  const qrInput = machine.getByLabel("Scan QR-code van de koerier");
+  const manualToggle = machine.getByText("Handmatig invoeren");
+  await expect(qrInput.or(manualToggle).first()).toBeVisible({ timeout: 15_000 });
+  if (!(await qrInput.isVisible())) await manualToggle.click();
+  await qrInput.fill(qrPayload!);
   await machine.getByRole("button", { name: "Scan QR" }).click();
   await expect(machine.getByText("Gekoppeld ✓")).toBeVisible();
 }

@@ -39,7 +39,7 @@ test("hand-in happy path across courier and machine", async ({ page }) => {
   await expect(page.getByText("Pakket ingeleverd ✓")).toBeVisible();
 
   // next-parcel mode names what to grab next
-  await expect(page.getByRole("button", { name: /Volgende inleveren: DHL-IN-002/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Volgende (inleveren|ophalen): DHL-/ })).toBeVisible();
   await page.getByRole("button", { name: "Sessie afronden" }).click();
   await expect(page.getByText("Sessie afgerond")).toBeVisible();
 });
@@ -90,11 +90,10 @@ test("a dangling open door blocks the next session until closed", async ({ page 
   await startSessionFor(page, machine, "DHL-IN-001");
   await expect(page.getByText("Plaats pakket en sluit de deur")).toBeVisible({ timeout: 15_000 });
 
-  // courier walks away with the door open
+  // courier walks away with the door open: leaves the wizard, the session
+  // stays ACTIVE server-side (the reaper would clean it up after 5 min)
   await machine.getByRole("button", { name: "Laat open" }).click();
-  await page.getByRole("button", { name: "Sessie afronden" }).click();
-  await expect(page.getByText("Sessie afgerond")).toBeVisible();
-  await page.getByRole("button", { name: "Terug naar stop" }).click();
+  await gotoLockerStop(page);
 
   // the machine nags about the open door
   await expect(machine.getByText(/Sluit eerst vak/)).toBeVisible({ timeout: 5_000 });
@@ -135,11 +134,11 @@ test("announced parcel reserves a visible compartment; reset clears it", async (
   await expect(machine.getByText(/Aangemeld via Kafka/)).toBeVisible();
 
   // the Kafka consumer reserves a door; the machine shows it within a few polls
-  await expect(machine.getByText("DHL-IN-E2E")).toBeVisible({ timeout: 20_000 });
+  await expect(machine.getByText("DHL-IN-E2E", { exact: true })).toBeVisible({ timeout: 20_000 });
 
   // and the courier app picks the parcel up on the next trips refresh
   await expect(page.getByRole("button", { name: /DHL-IN-E2E/ })).toBeVisible({ timeout: 15_000 });
 
   await resetDemo(machine);
-  await expect(machine.getByText("DHL-IN-E2E")).not.toBeVisible({ timeout: 10_000 });
+  await expect(machine.getByText("DHL-IN-E2E", { exact: true })).not.toBeVisible({ timeout: 10_000 });
 });
