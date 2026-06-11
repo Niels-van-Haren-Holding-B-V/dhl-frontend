@@ -154,6 +154,14 @@ export const MutationRequestSizeEnum = {
 
 export type MutationRequestSizeEnum = typeof MutationRequestSizeEnum[keyof typeof MutationRequestSizeEnum];
 
+export interface ParcelAnnouncement {
+    'barcode'?: string;
+    'stopId'?: string | null;
+    'lengthCm'?: number;
+    'widthCm'?: number;
+    'heightCm'?: number;
+    'weightG'?: number;
+}
 export interface ParcelDto {
     'id'?: string;
     'barcode'?: string;
@@ -3267,6 +3275,40 @@ export const SimProxyControllerApiAxiosParamCreator = function (configuration?: 
     return {
         /**
          * 
+         * @param {ParcelAnnouncement} parcelAnnouncement 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        announceParcel: async (parcelAnnouncement: ParcelAnnouncement, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'parcelAnnouncement' is not null or undefined
+            assertParamExists('announceParcel', 'parcelAnnouncement', parcelAnnouncement)
+            const localVarPath = `/api/sim/parcels`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = '*/*';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(parcelAnnouncement, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {BindRequest} bindRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3439,6 +3481,18 @@ export const SimProxyControllerApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @param {ParcelAnnouncement} parcelAnnouncement 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async announceParcel(parcelAnnouncement: ParcelAnnouncement, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ParcelAnnouncement>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.announceParcel(parcelAnnouncement, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SimProxyControllerApi.announceParcel']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @param {BindRequest} bindRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3507,6 +3561,15 @@ export const SimProxyControllerApiFactory = function (configuration?: Configurat
     return {
         /**
          * 
+         * @param {SimProxyControllerApiAnnounceParcelRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        announceParcel(requestParameters: SimProxyControllerApiAnnounceParcelRequest, options?: RawAxiosRequestConfig): AxiosPromise<ParcelAnnouncement> {
+            return localVarFp.announceParcel(requestParameters.parcelAnnouncement, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @param {SimProxyControllerApiBind1Request} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3553,6 +3616,13 @@ export const SimProxyControllerApiFactory = function (configuration?: Configurat
 };
 
 /**
+ * Request parameters for announceParcel operation in SimProxyControllerApi.
+ */
+export interface SimProxyControllerApiAnnounceParcelRequest {
+    readonly parcelAnnouncement: ParcelAnnouncement
+}
+
+/**
  * Request parameters for bind1 operation in SimProxyControllerApi.
  */
 export interface SimProxyControllerApiBind1Request {
@@ -3584,6 +3654,16 @@ export interface SimProxyControllerApiReset1Request {
  * SimProxyControllerApi - object-oriented interface
  */
 export class SimProxyControllerApi extends BaseAPI {
+    /**
+     * 
+     * @param {SimProxyControllerApiAnnounceParcelRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public announceParcel(requestParameters: SimProxyControllerApiAnnounceParcelRequest, options?: RawAxiosRequestConfig) {
+        return SimProxyControllerApiFp(this.configuration).announceParcel(requestParameters.parcelAnnouncement, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @param {SimProxyControllerApiBind1Request} requestParameters Request parameters.
