@@ -29,6 +29,10 @@ export function ScanQrStep({
           <div className="flex justify-center rounded-2xl bg-white p-6 shadow">
             <QRCodeSVG value={qrPayload} size={256} marginSize={2} />
           </div>
+          {/* machine-readable for e2e tests; invisible to users */}
+          <span data-testid="qr-payload" className="sr-only">
+            {qrPayload}
+          </span>
           <p className="mt-4 animate-pulse text-center text-neutral-600">Wachten op koppeling…</p>
         </>
       ) : (

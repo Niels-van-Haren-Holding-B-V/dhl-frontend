@@ -1,11 +1,15 @@
 import { useEffect, type ReactNode } from "react";
 import { AuthProvider as OidcProvider, useAuth } from "react-oidc-context";
+import { WebStorageStateStore } from "oidc-client-ts";
 import config from "./config";
 import { setAccessToken, setOnUnauthorized } from "./api/client";
 
 const oidcConfig = {
   authority: `${config.authUrl}/realms/${config.authRealm}`,
   client_id: config.authClientId,
+  // localStorage instead of the sessionStorage default: the courier tab and
+  // the machine tab share one login instead of bouncing through Keycloak.
+  userStore: new WebStorageStateStore({ store: window.localStorage }),
   // Return to the page the login started on (the realm allows origin/*) —
   // landing somewhere else invites client-side redirects that strip the
   // ?code&state before the library exchanges them (login loop).
