@@ -10,7 +10,7 @@ export function ConsolePane({ state }: { state: SimStateSnapshot }) {
   const reset = useSimReset();
 
   return (
-    <section className="flex flex-col gap-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-4 shadow">
+    <section className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-4 shadow">
       <header className="flex items-center justify-between">
         <h2 className="font-bold text-neutral-700">Operator console</h2>
         <button

@@ -13,8 +13,11 @@ import { ConsolePane } from "./ConsolePane";
 export function MachinePage() {
   const { data, isPending, error } = useSimState();
 
+  // h-dvh + internal scrolling: the event log grows with every poll, and a
+  // content-sized grid row would let it stretch the machine face (doors are
+  // percentage-sized) — the kiosk must stay pinned to the viewport.
   return (
-    <div className="grid min-h-dvh grid-cols-1 gap-4 bg-neutral-100 p-4 text-neutral-900 lg:grid-cols-[3fr_2fr]">
+    <div className="grid min-h-dvh grid-cols-1 gap-4 bg-neutral-100 p-4 text-neutral-900 lg:h-dvh lg:grid-cols-[3fr_2fr] lg:overflow-hidden">
       {isPending ? (
         <p className="col-span-full self-center text-center text-xl text-neutral-500">
           Verbinden met automaat…

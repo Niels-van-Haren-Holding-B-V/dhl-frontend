@@ -50,6 +50,9 @@ export const deliveryApi = new DeliveryControllerApi(undefined, config.apiBaseUr
 // Locker rejections (HTTP 422 {code, message}) the courier can act on.
 const rejectionMessages: Record<string, string> = {
   DOOR_STILL_OPEN: "Er staat nog een deur open op de automaat — sluit die eerst.",
+  DUPLICATE_BARCODE: "Deze barcode bestaat al — kies een andere.",
+  NO_FITTING_SIZE: "Deze afmetingen passen in geen enkel vak.",
+  NO_CAPACITY: "Geen vrij vak beschikbaar in de juiste maat.",
   NO_COMPARTMENT_AVAILABLE: "Geen vrij vak beschikbaar in de juiste maat.",
   UNKNOWN_PARCEL: "Dit pakket ligt niet in deze automaat.",
   COMPARTMENT_DEFECT: "Het vak meldt een storing.",

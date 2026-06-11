@@ -3,7 +3,8 @@ import { useAnnounceParcel } from "../../queries/simState";
 import { apiErrorMessage } from "../../api/client";
 
 function randomBarcode() {
-  return `DHL-IN-${String(Math.floor(Math.random() * 900) + 100)}`;
+  // wide enough that repeated demo announcements do not collide
+  return `DHL-IN-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 }
 
 /**
