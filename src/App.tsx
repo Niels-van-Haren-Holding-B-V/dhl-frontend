@@ -5,7 +5,7 @@ import { TripListPage } from "./pages/TripListPage";
 import { TripDetailPage } from "./pages/TripDetailPage";
 import { StopPage } from "./pages/StopPage";
 import { SessionPage } from "./pages/session/SessionPage";
-import { MachinePage } from "./pages/MachinePage";
+import { MachinePage } from "./pages/machine/MachinePage";
 
 export function App() {
   // One bundle, two faces: on the locker hostname the root IS the machine page.

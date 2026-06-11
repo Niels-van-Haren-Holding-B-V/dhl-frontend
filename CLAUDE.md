@@ -47,8 +47,8 @@ Stopoverzicht → Bezorgstatus.
 
 - Single source of truth: `useQuery(['trips'])`, `refetchInterval: 5000`.
 - LOCKER stops: locker icon + "Start lockersessie" action.
-- Barcode input: text field acting as scanner. Stretch goal (after M7 only):
-  camera scanning via html5-qrcode.
+- Barcode input: text field acting as scanner; camera QR scanning lives on
+  the machine page (jsqr over getUserMedia) where the physical scan happens.
 
 ### Locker session flow
 
@@ -75,7 +75,9 @@ Stopoverzicht → Bezorgstatus.
 
 ## Parcel machine page — /machine (landscape, kiosk + operator console)
 
-Two-pane layout, dark kiosk styling, no shared nav/header with the courier app.
+Two-pane layout, light schematic machine styling (modelled on a real
+Packstation: yellow band, grey doors, TC console in-column), no shared
+nav/header with the courier app.
 Served on dhl-locker.vanharen-it.nl via its own ingress to the same bundle.
 
 Data source: `useQuery(['simState'])` polling GET /api/sim/state every 1000ms
@@ -94,10 +96,11 @@ user — acceptable for a demo, note it in a comment).
 
 ### Right pane — operator console (the demo weapon)
 
-- **State machine inspector**: session state as a horizontal step strip
-  (INIT → BOUND → VALIDATED → DOOR_OPEN → CONFIRMED → HANDED_IN), active state
-  highlighted, plus the optimistic-lock **version number** ticking up on every
-  mutation. On 409/reconcile, flash the version badge.
+- **State machine inspector**: session state as a horizontal step strip with
+  the real backend states, Dutch labels (INIT → GEKOPPELD → DEUR OPEN →
+  BEVESTIGEN → INGELEVERD → KLAAR; hand-out states shown as a text line),
+  active state highlighted, plus the optimistic-lock **version number**
+  ticking up on every mutation (badge flashes on change).
 - **Event log**: last 50 sim events {time, endpoint, summary, resulting state,
   version}, newest on top.
 - **Failure injection panel** — toggles wired to POST /api/sim/failures:
@@ -112,8 +115,8 @@ the event log scroll.
 
 ## Demo ergonomics
 
-- Everything reachable without dev tools; /machine link hidden in the courier
-  app footer (long-press); reset one click away.
+- Everything reachable without dev tools; the machine page is simply the
+  root of the locker hostname (and /machine elsewhere); reset one click away.
 - Both screens side-by-side on a 1080p beamer: courier app in a phone-frame
   container next to the machine page, or two browser windows.
 
