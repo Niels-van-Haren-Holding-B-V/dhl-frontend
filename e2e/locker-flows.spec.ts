@@ -53,7 +53,11 @@ test("vak te klein escalates to a bigger door", async ({ page }) => {
   await toggleFailure(machine, "Vak te klein"); // disarm so the retry is honest
   await page.getByRole("button", { name: "Vak te klein", exact: true }).click();
 
-  // the wizard re-attempts by itself and a bigger door opens
+  // doors are physical: the too-small door stays open and blocks the retry
+  await expect(page.getByText(/Er staat nog een deur open/)).toBeVisible({ timeout: 15_000 });
+  await closeOpenDoor(machine);
+
+  // …and once it is closed the wizard re-attempts by itself: a bigger door opens
   await expect(page.getByText("Plaats pakket en sluit de deur")).toBeVisible({ timeout: 15_000 });
 
   await closeOpenDoor(machine);
@@ -99,9 +103,8 @@ test("a dangling open door blocks the next session until closed", async ({ page 
   await startSessionFor(page, machine, "DHL-IN-002");
   await expect(page.getByText(/Er staat nog een deur open/)).toBeVisible({ timeout: 15_000 });
 
-  // someone closes the abandoned door; retry continues the flow
+  // someone closes the abandoned door; the wizard continues by itself
   await closeOpenDoor(machine);
-  await page.getByRole("button", { name: "Opnieuw proberen" }).click();
   await expect(page.getByText("Plaats pakket en sluit de deur")).toBeVisible({ timeout: 15_000 });
   await closeOpenDoor(machine);
   await page.getByRole("button", { name: "Bevestig plaatsing" }).click();

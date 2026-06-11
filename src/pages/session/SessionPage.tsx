@@ -128,6 +128,23 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
   }, [doorIsOpen, polledAt]);
 
   const actionError = action.error ?? validate.error;
+  // A physically open door blocks every door-opening action. Don't park on
+  // an error: re-arm on every status poll so the flow continues by itself
+  // the moment someone closes the door.
+  const doorBlocked = apiErrorCode(actionError) === "DOOR_STILL_OPEN";
+  const [waitingForDoorClose, setWaitingForDoorClose] = useState(false);
+  const lastDoorRetry = useRef(0);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- tracks an external condition
+    if (doorBlocked) setWaitingForDoorClose(true);
+    else if (doorIsOpen || !selected) setWaitingForDoorClose(false);
+  }, [doorBlocked, doorIsOpen, selected]);
+  useEffect(() => {
+    if (!doorBlocked || !selected) return;
+    if (lastDoorRetry.current === polledAt) return;
+    lastDoorRetry.current = polledAt;
+    rearm();
+  });
   // Escalation dead-end: the machine has no free door big enough, not even
   // after size escalation — the parcel cannot be delivered here.
   const cannotDeliver =
@@ -236,7 +253,10 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
             parcel={selected}
             barcode={barcode}
             busy={action.isPending}
-            onReportMissing={() => action.mutate({ action: "report-missing", barcode })}
+            onReportMissing={() =>
+              // the empty compartment's door stays open; back to the picker
+              action.mutate({ action: "report-missing", barcode }, { onSuccess: () => resetFlow() })
+            }
             onAbort={() => action.mutate({ action: "abort" })}
           />
         ) : simState === "HAND_OUT_AWAITING_CONFIRM" ? (
@@ -272,8 +292,13 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
             Status bijgewerkt na een conflict (reconciled) — het scherm toont de actuele toestand.
           </p>
         )}
-        {actionError != null && (
+        {actionError != null && !doorBlocked && (
           <p className="text-dhl-red mt-3 rounded-xl bg-red-50 p-3 text-sm">{apiErrorMessage(actionError)}</p>
+        )}
+        {waitingForDoorClose && !doorIsOpen && (
+          <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+            Er staat nog een deur open op de automaat — zodra die dicht is gaat het vanzelf verder.
+          </p>
         )}
       </QueryGate>
     </CourierLayout>

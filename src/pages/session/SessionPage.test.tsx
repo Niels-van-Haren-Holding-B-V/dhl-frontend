@@ -322,10 +322,10 @@ describe("HAND_OUT door open", () => {
     render(sessionUi({ barcode: "DHL-OUT-001" }));
     expect(screen.getByText("Neem het pakket uit het vak")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Pakket ontbreekt"));
-    expect(q.action.mutate).toHaveBeenCalledWith({
-      action: "report-missing",
-      barcode: "DHL-OUT-001",
-    });
+    expect(q.action.mutate).toHaveBeenCalledWith(
+      { action: "report-missing", barcode: "DHL-OUT-001" },
+      expect.anything(), // onSuccess resets the flow back to the picker
+    );
     fireEvent.click(screen.getByText("Afbreken"));
     expect(q.action.mutate).toHaveBeenCalledWith({ action: "abort" });
   });
