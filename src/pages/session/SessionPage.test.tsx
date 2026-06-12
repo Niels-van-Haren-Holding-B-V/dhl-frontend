@@ -361,6 +361,21 @@ describe("footers", () => {
     expect(screen.getByText(/bijgewerkt na een conflict/)).toBeInTheDocument();
   });
 
+  it("offers a retry when a reconciled action leaves the wizard parked on READY", () => {
+    // FORCE_409 scenario: the attempt was rejected, the BFF reconciled back
+    // to READY (success response, no error) — without a retry the one-tap
+    // flow dead-ends because the auto-fire guard has burnt for this barcode.
+    setSimState("READY");
+    q.action.data = { reconciled: true };
+    render(sessionUi({ barcode: "DHL-IN-001" }));
+    expect(screen.getByText(/bijgewerkt na een conflict/)).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Opnieuw proberen"));
+    // rearm: clears the mutation result and the auto-fire guard so the
+    // next READY poll fires validate+attempt again
+    expect(q.action.reset).toHaveBeenCalled();
+    expect(q.validate.reset).toHaveBeenCalled();
+  });
+
   it("shows a Dutch error message for a failed action", () => {
     setSimState("READY");
     q.action.error = new Error("boom");

@@ -145,6 +145,12 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
     lastDoorRetry.current = polledAt;
     rearm();
   });
+  // A reconciled response means the requested mutation did NOT happen: the
+  // locker reported a conflict and the app re-synced to its current state.
+  // When that re-sync parks us back on READY with a parcel picked, no door
+  // opened — and the auto-fire guard has already burnt for this barcode, so
+  // nothing will re-fire by itself. Surface the retry button.
+  const reconciledOnReady = action.data?.reconciled === true && simState === "READY";
   // Escalation dead-end: the machine has no free door big enough, not even
   // after size escalation — the parcel cannot be delivered here.
   const cannotDeliver =
@@ -199,7 +205,7 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
             openParcels={openParcels}
             validation={validation}
             cannotDeliver={cannotDeliver}
-            hasActionError={actionError != null}
+            hasActionError={actionError != null || reconciledOnReady}
             actionBusy={action.isPending}
             validateBusy={validate.isPending}
             registerBusy={registerNotDelivered.isPending}
