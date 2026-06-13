@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deliveryApi, lockerApi } from "../api/client";
+import { HandInCommandActionEnum, HandOutCommandActionEnum } from "../api/generated";
 import type { LockerActionResponse } from "../api/generated";
 
 export function useLockerSession(sessionId: string | undefined) {
@@ -43,29 +44,84 @@ export function useSessionAction(sessionId: string) {
     }): Promise<LockerActionResponse> => {
       switch (action) {
         case "attempt":
-          return (await lockerApi.attempt1({ id: sessionId, lockerActionRequest: { barcode } })).data;
+          return (
+            await lockerApi.handIn({
+              id: sessionId,
+              handInCommand: { action: HandInCommandActionEnum.Attempt, barcode },
+            })
+          ).data;
         case "confirm":
-          return (await lockerApi.confirm1({ id: sessionId, lockerActionRequest: { barcode } })).data;
+          return (
+            await lockerApi.handIn({
+              id: sessionId,
+              handInCommand: { action: HandInCommandActionEnum.Confirm, barcode },
+            })
+          ).data;
         case "continue":
-          return (await lockerApi.handInContinue({ id: sessionId })).data;
+          return (
+            await lockerApi.handIn({
+              id: sessionId,
+              handInCommand: { action: HandInCommandActionEnum.Continue },
+            })
+          ).data;
         case "report-size":
-          return (await lockerApi.reportSize1({ id: sessionId })).data;
+          return (
+            await lockerApi.handIn({
+              id: sessionId,
+              handInCommand: { action: HandInCommandActionEnum.ReportSize },
+            })
+          ).data;
         case "report-issue":
-          return (await lockerApi.reportIssue1({ id: sessionId })).data;
+          return (
+            await lockerApi.handIn({
+              id: sessionId,
+              handInCommand: { action: HandInCommandActionEnum.ReportIssue },
+            })
+          ).data;
         case "reopen":
-          return (await lockerApi.reopen1({ id: sessionId })).data;
+          return (
+            await lockerApi.handIn({
+              id: sessionId,
+              handInCommand: { action: HandInCommandActionEnum.Reopen },
+            })
+          ).data;
         case "finish":
           return (await lockerApi.finish({ id: sessionId })).data;
         case "out-start":
-          return (await lockerApi.handOutStart1({ id: sessionId, lockerActionRequest: { barcode } })).data;
+          return (
+            await lockerApi.handOut({
+              id: sessionId,
+              handOutCommand: { action: HandOutCommandActionEnum.Start, barcode },
+            })
+          ).data;
         case "out-confirm":
-          return (await lockerApi.handOutConfirm1({ id: sessionId, lockerActionRequest: { barcode } })).data;
+          return (
+            await lockerApi.handOut({
+              id: sessionId,
+              handOutCommand: { action: HandOutCommandActionEnum.Confirm, barcode },
+            })
+          ).data;
         case "out-continue":
-          return (await lockerApi.handOutContinue1({ id: sessionId })).data;
+          return (
+            await lockerApi.handOut({
+              id: sessionId,
+              handOutCommand: { action: HandOutCommandActionEnum.Continue },
+            })
+          ).data;
         case "report-missing":
-          return (await lockerApi.reportMissing({ id: sessionId, lockerActionRequest: { barcode } })).data;
+          return (
+            await lockerApi.handOut({
+              id: sessionId,
+              handOutCommand: { action: HandOutCommandActionEnum.ReportMissing, barcode },
+            })
+          ).data;
         case "abort":
-          return (await lockerApi.abort({ id: sessionId })).data;
+          return (
+            await lockerApi.handOut({
+              id: sessionId,
+              handOutCommand: { action: HandOutCommandActionEnum.Abort },
+            })
+          ).data;
       }
     },
     onSettled: () => {

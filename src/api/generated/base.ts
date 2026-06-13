@@ -19,7 +19,7 @@ import type { Configuration } from './configuration';
 import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 
-export const BASE_PATH = "http://localhost:12085".replace(/\/+$/, "");
+export const BASE_PATH = "http://localhost:12080".replace(/\/+$/, "");
 
 export const COLLECTION_FORMATS = {
     csv: ",",

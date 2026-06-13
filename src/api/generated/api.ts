@@ -100,6 +100,37 @@ export const FailureRequestModeEnum = {
 
 export type FailureRequestModeEnum = typeof FailureRequestModeEnum[keyof typeof FailureRequestModeEnum];
 
+export interface HandInCommand {
+    'action'?: HandInCommandActionEnum;
+    'barcode'?: string | null;
+}
+
+export const HandInCommandActionEnum = {
+    Attempt: 'ATTEMPT',
+    Confirm: 'CONFIRM',
+    Continue: 'CONTINUE',
+    ReportSize: 'REPORT_SIZE',
+    ReportIssue: 'REPORT_ISSUE',
+    Reopen: 'REOPEN',
+} as const;
+
+export type HandInCommandActionEnum = typeof HandInCommandActionEnum[keyof typeof HandInCommandActionEnum];
+
+export interface HandOutCommand {
+    'action'?: HandOutCommandActionEnum;
+    'barcode'?: string | null;
+}
+
+export const HandOutCommandActionEnum = {
+    Start: 'START',
+    Continue: 'CONTINUE',
+    Confirm: 'CONFIRM',
+    ReportMissing: 'REPORT_MISSING',
+    Abort: 'ABORT',
+} as const;
+
+export type HandOutCommandActionEnum = typeof HandOutCommandActionEnum[keyof typeof HandOutCommandActionEnum];
+
 export interface InitRequest {
     'reference'?: string | null;
 }
@@ -155,7 +186,7 @@ export const MutationRequestSizeEnum = {
 export type MutationRequestSizeEnum = typeof MutationRequestSizeEnum[keyof typeof MutationRequestSizeEnum];
 
 export interface ParcelAnnouncement {
-    'barcode'?: string;
+    'barcode': string;
     'stopId'?: string | null;
     'lengthCm'?: number;
     'widthCm'?: number;
@@ -198,7 +229,7 @@ export const ParcelDtoSizeEnum = {
 export type ParcelDtoSizeEnum = typeof ParcelDtoSizeEnum[keyof typeof ParcelDtoSizeEnum];
 
 export interface RegisterDeliveryRequest {
-    'barcode'?: string;
+    'barcode': string;
     'status'?: RegisterDeliveryRequestStatusEnum;
     'sessionId'?: string | null;
 }
@@ -226,6 +257,23 @@ export const RegisterDeliveryResponseStatusEnum = {
 } as const;
 
 export type RegisterDeliveryResponseStatusEnum = typeof RegisterDeliveryResponseStatusEnum[keyof typeof RegisterDeliveryResponseStatusEnum];
+
+export interface ReserveRequest {
+    'barcode'?: string;
+    'size'?: ReserveRequestSizeEnum;
+}
+
+export const ReserveRequestSizeEnum = {
+    Xxs: 'XXS',
+    Xs: 'XS',
+    S: 'S',
+    M: 'M',
+    L: 'L',
+    Xl: 'XL',
+    Xxl: 'XXL',
+} as const;
+
+export type ReserveRequestSizeEnum = typeof ReserveRequestSizeEnum[keyof typeof ReserveRequestSizeEnum];
 
 export interface ResetRequest {
     'config'?: string | null;
@@ -1752,115 +1800,6 @@ export const LockerSessionControllerApiAxiosParamCreator = function (configurati
     return {
         /**
          * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        abort: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('abort', 'id', id)
-            const localVarPath = `/api/locker/sessions/{id}/hand-out/abort`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        attempt1: async (id: string, lockerActionRequest: LockerActionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('attempt1', 'id', id)
-            // verify required parameter 'lockerActionRequest' is not null or undefined
-            assertParamExists('attempt1', 'lockerActionRequest', lockerActionRequest)
-            const localVarPath = `/api/locker/sessions/{id}/hand-in/attempt`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(lockerActionRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        confirm1: async (id: string, lockerActionRequest: LockerActionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('confirm1', 'id', id)
-            // verify required parameter 'lockerActionRequest' is not null or undefined
-            assertParamExists('confirm1', 'lockerActionRequest', lockerActionRequest)
-            const localVarPath = `/api/locker/sessions/{id}/hand-in/confirm`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(lockerActionRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @param {CreateSessionRequest} createSessionRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1929,49 +1868,16 @@ export const LockerSessionControllerApiAxiosParamCreator = function (configurati
         /**
          * 
          * @param {string} id 
+         * @param {HandInCommand} handInCommand 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        handInContinue: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        handIn: async (id: string, handInCommand: HandInCommand, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('handInContinue', 'id', id)
-            const localVarPath = `/api/locker/sessions/{id}/hand-in/continue`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        handOutConfirm1: async (id: string, lockerActionRequest: LockerActionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('handOutConfirm1', 'id', id)
-            // verify required parameter 'lockerActionRequest' is not null or undefined
-            assertParamExists('handOutConfirm1', 'lockerActionRequest', lockerActionRequest)
-            const localVarPath = `/api/locker/sessions/{id}/hand-out/confirm`
+            assertParamExists('handIn', 'id', id)
+            // verify required parameter 'handInCommand' is not null or undefined
+            assertParamExists('handIn', 'handInCommand', handInCommand)
+            const localVarPath = `/api/locker/sessions/{id}/hand-in`
                 .replace('{id}', encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1990,7 +1896,7 @@ export const LockerSessionControllerApiAxiosParamCreator = function (configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(lockerActionRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(handInCommand, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2000,49 +1906,16 @@ export const LockerSessionControllerApiAxiosParamCreator = function (configurati
         /**
          * 
          * @param {string} id 
+         * @param {HandOutCommand} handOutCommand 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        handOutContinue1: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        handOut: async (id: string, handOutCommand: HandOutCommand, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
-            assertParamExists('handOutContinue1', 'id', id)
-            const localVarPath = `/api/locker/sessions/{id}/hand-out/continue`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        handOutStart1: async (id: string, lockerActionRequest: LockerActionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('handOutStart1', 'id', id)
-            // verify required parameter 'lockerActionRequest' is not null or undefined
-            assertParamExists('handOutStart1', 'lockerActionRequest', lockerActionRequest)
-            const localVarPath = `/api/locker/sessions/{id}/hand-out/start`
+            assertParamExists('handOut', 'id', id)
+            // verify required parameter 'handOutCommand' is not null or undefined
+            assertParamExists('handOut', 'handOutCommand', handOutCommand)
+            const localVarPath = `/api/locker/sessions/{id}/hand-out`
                 .replace('{id}', encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2061,144 +1934,7 @@ export const LockerSessionControllerApiAxiosParamCreator = function (configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(lockerActionRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        reopen1: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('reopen1', 'id', id)
-            const localVarPath = `/api/locker/sessions/{id}/hand-in/reopen`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        reportIssue1: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('reportIssue1', 'id', id)
-            const localVarPath = `/api/locker/sessions/{id}/hand-in/report-issue`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        reportMissing: async (id: string, lockerActionRequest: LockerActionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('reportMissing', 'id', id)
-            // verify required parameter 'lockerActionRequest' is not null or undefined
-            assertParamExists('reportMissing', 'lockerActionRequest', lockerActionRequest)
-            const localVarPath = `/api/locker/sessions/{id}/hand-out/report-missing`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(lockerActionRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        reportSize1: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('reportSize1', 'id', id)
-            const localVarPath = `/api/locker/sessions/{id}/hand-in/report-size`
-                .replace('{id}', encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            localVarHeaderParameter['Accept'] = '*/*';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(handOutCommand, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2287,44 +2023,6 @@ export const LockerSessionControllerApiFp = function(configuration?: Configurati
     return {
         /**
          * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async abort(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.abort(id, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.abort']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async attempt1(id: string, lockerActionRequest: LockerActionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.attempt1(id, lockerActionRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.attempt1']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async confirm1(id: string, lockerActionRequest: LockerActionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.confirm1(id, lockerActionRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.confirm1']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
          * @param {CreateSessionRequest} createSessionRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2350,100 +2048,27 @@ export const LockerSessionControllerApiFp = function(configuration?: Configurati
         /**
          * 
          * @param {string} id 
+         * @param {HandInCommand} handInCommand 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async handInContinue(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.handInContinue(id, options);
+        async handIn(id: string, handInCommand: HandInCommand, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.handIn(id, handInCommand, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.handInContinue']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.handIn']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
          * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
+         * @param {HandOutCommand} handOutCommand 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async handOutConfirm1(id: string, lockerActionRequest: LockerActionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.handOutConfirm1(id, lockerActionRequest, options);
+        async handOut(id: string, handOutCommand: HandOutCommand, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.handOut(id, handOutCommand, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.handOutConfirm1']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async handOutContinue1(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.handOutContinue1(id, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.handOutContinue1']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async handOutStart1(id: string, lockerActionRequest: LockerActionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.handOutStart1(id, lockerActionRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.handOutStart1']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async reopen1(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.reopen1(id, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.reopen1']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async reportIssue1(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.reportIssue1(id, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.reportIssue1']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {LockerActionRequest} lockerActionRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async reportMissing(id: string, lockerActionRequest: LockerActionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.reportMissing(id, lockerActionRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.reportMissing']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @param {string} id 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async reportSize1(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LockerActionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.reportSize1(id, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.reportSize1']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['LockerSessionControllerApi.handOut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -2482,33 +2107,6 @@ export const LockerSessionControllerApiFactory = function (configuration?: Confi
     return {
         /**
          * 
-         * @param {LockerSessionControllerApiAbortRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        abort(requestParameters: LockerSessionControllerApiAbortRequest, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.abort(requestParameters.id, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {LockerSessionControllerApiAttempt1Request} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        attempt1(requestParameters: LockerSessionControllerApiAttempt1Request, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.attempt1(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {LockerSessionControllerApiConfirm1Request} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        confirm1(requestParameters: LockerSessionControllerApiConfirm1Request, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.confirm1(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
          * @param {LockerSessionControllerApiCreateRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2527,75 +2125,21 @@ export const LockerSessionControllerApiFactory = function (configuration?: Confi
         },
         /**
          * 
-         * @param {LockerSessionControllerApiHandInContinueRequest} requestParameters Request parameters.
+         * @param {LockerSessionControllerApiHandInRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        handInContinue(requestParameters: LockerSessionControllerApiHandInContinueRequest, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.handInContinue(requestParameters.id, options).then((request) => request(axios, basePath));
+        handIn(requestParameters: LockerSessionControllerApiHandInRequest, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
+            return localVarFp.handIn(requestParameters.id, requestParameters.handInCommand, options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @param {LockerSessionControllerApiHandOutConfirm1Request} requestParameters Request parameters.
+         * @param {LockerSessionControllerApiHandOutRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        handOutConfirm1(requestParameters: LockerSessionControllerApiHandOutConfirm1Request, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.handOutConfirm1(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {LockerSessionControllerApiHandOutContinue1Request} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        handOutContinue1(requestParameters: LockerSessionControllerApiHandOutContinue1Request, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.handOutContinue1(requestParameters.id, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {LockerSessionControllerApiHandOutStart1Request} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        handOutStart1(requestParameters: LockerSessionControllerApiHandOutStart1Request, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.handOutStart1(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {LockerSessionControllerApiReopen1Request} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        reopen1(requestParameters: LockerSessionControllerApiReopen1Request, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.reopen1(requestParameters.id, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {LockerSessionControllerApiReportIssue1Request} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        reportIssue1(requestParameters: LockerSessionControllerApiReportIssue1Request, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.reportIssue1(requestParameters.id, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {LockerSessionControllerApiReportMissingRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        reportMissing(requestParameters: LockerSessionControllerApiReportMissingRequest, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.reportMissing(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @param {LockerSessionControllerApiReportSize1Request} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        reportSize1(requestParameters: LockerSessionControllerApiReportSize1Request, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
-            return localVarFp.reportSize1(requestParameters.id, options).then((request) => request(axios, basePath));
+        handOut(requestParameters: LockerSessionControllerApiHandOutRequest, options?: RawAxiosRequestConfig): AxiosPromise<LockerActionResponse> {
+            return localVarFp.handOut(requestParameters.id, requestParameters.handOutCommand, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -2619,31 +2163,6 @@ export const LockerSessionControllerApiFactory = function (configuration?: Confi
 };
 
 /**
- * Request parameters for abort operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiAbortRequest {
-    readonly id: string
-}
-
-/**
- * Request parameters for attempt1 operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiAttempt1Request {
-    readonly id: string
-
-    readonly lockerActionRequest: LockerActionRequest
-}
-
-/**
- * Request parameters for confirm1 operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiConfirm1Request {
-    readonly id: string
-
-    readonly lockerActionRequest: LockerActionRequest
-}
-
-/**
  * Request parameters for create operation in LockerSessionControllerApi.
  */
 export interface LockerSessionControllerApiCreateRequest {
@@ -2658,65 +2177,21 @@ export interface LockerSessionControllerApiFinishRequest {
 }
 
 /**
- * Request parameters for handInContinue operation in LockerSessionControllerApi.
+ * Request parameters for handIn operation in LockerSessionControllerApi.
  */
-export interface LockerSessionControllerApiHandInContinueRequest {
+export interface LockerSessionControllerApiHandInRequest {
     readonly id: string
+
+    readonly handInCommand: HandInCommand
 }
 
 /**
- * Request parameters for handOutConfirm1 operation in LockerSessionControllerApi.
+ * Request parameters for handOut operation in LockerSessionControllerApi.
  */
-export interface LockerSessionControllerApiHandOutConfirm1Request {
+export interface LockerSessionControllerApiHandOutRequest {
     readonly id: string
 
-    readonly lockerActionRequest: LockerActionRequest
-}
-
-/**
- * Request parameters for handOutContinue1 operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiHandOutContinue1Request {
-    readonly id: string
-}
-
-/**
- * Request parameters for handOutStart1 operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiHandOutStart1Request {
-    readonly id: string
-
-    readonly lockerActionRequest: LockerActionRequest
-}
-
-/**
- * Request parameters for reopen1 operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiReopen1Request {
-    readonly id: string
-}
-
-/**
- * Request parameters for reportIssue1 operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiReportIssue1Request {
-    readonly id: string
-}
-
-/**
- * Request parameters for reportMissing operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiReportMissingRequest {
-    readonly id: string
-
-    readonly lockerActionRequest: LockerActionRequest
-}
-
-/**
- * Request parameters for reportSize1 operation in LockerSessionControllerApi.
- */
-export interface LockerSessionControllerApiReportSize1Request {
-    readonly id: string
+    readonly handOutCommand: HandOutCommand
 }
 
 /**
@@ -2741,36 +2216,6 @@ export interface LockerSessionControllerApiValidate1Request {
 export class LockerSessionControllerApi extends BaseAPI {
     /**
      * 
-     * @param {LockerSessionControllerApiAbortRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public abort(requestParameters: LockerSessionControllerApiAbortRequest, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).abort(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {LockerSessionControllerApiAttempt1Request} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public attempt1(requestParameters: LockerSessionControllerApiAttempt1Request, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).attempt1(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {LockerSessionControllerApiConfirm1Request} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public confirm1(requestParameters: LockerSessionControllerApiConfirm1Request, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).confirm1(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
      * @param {LockerSessionControllerApiCreateRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -2791,82 +2236,22 @@ export class LockerSessionControllerApi extends BaseAPI {
 
     /**
      * 
-     * @param {LockerSessionControllerApiHandInContinueRequest} requestParameters Request parameters.
+     * @param {LockerSessionControllerApiHandInRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public handInContinue(requestParameters: LockerSessionControllerApiHandInContinueRequest, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).handInContinue(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    public handIn(requestParameters: LockerSessionControllerApiHandInRequest, options?: RawAxiosRequestConfig) {
+        return LockerSessionControllerApiFp(this.configuration).handIn(requestParameters.id, requestParameters.handInCommand, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * 
-     * @param {LockerSessionControllerApiHandOutConfirm1Request} requestParameters Request parameters.
+     * @param {LockerSessionControllerApiHandOutRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public handOutConfirm1(requestParameters: LockerSessionControllerApiHandOutConfirm1Request, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).handOutConfirm1(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {LockerSessionControllerApiHandOutContinue1Request} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public handOutContinue1(requestParameters: LockerSessionControllerApiHandOutContinue1Request, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).handOutContinue1(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {LockerSessionControllerApiHandOutStart1Request} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public handOutStart1(requestParameters: LockerSessionControllerApiHandOutStart1Request, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).handOutStart1(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {LockerSessionControllerApiReopen1Request} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public reopen1(requestParameters: LockerSessionControllerApiReopen1Request, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).reopen1(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {LockerSessionControllerApiReportIssue1Request} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public reportIssue1(requestParameters: LockerSessionControllerApiReportIssue1Request, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).reportIssue1(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {LockerSessionControllerApiReportMissingRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public reportMissing(requestParameters: LockerSessionControllerApiReportMissingRequest, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).reportMissing(requestParameters.id, requestParameters.lockerActionRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @param {LockerSessionControllerApiReportSize1Request} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public reportSize1(requestParameters: LockerSessionControllerApiReportSize1Request, options?: RawAxiosRequestConfig) {
-        return LockerSessionControllerApiFp(this.configuration).reportSize1(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    public handOut(requestParameters: LockerSessionControllerApiHandOutRequest, options?: RawAxiosRequestConfig) {
+        return LockerSessionControllerApiFp(this.configuration).handOut(requestParameters.id, requestParameters.handOutCommand, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3001,6 +2386,40 @@ export const SimControlControllerApiAxiosParamCreator = function (configuration?
         },
         /**
          * 
+         * @param {ReserveRequest} reserveRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reserve: async (reserveRequest: ReserveRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'reserveRequest' is not null or undefined
+            assertParamExists('reserve', 'reserveRequest', reserveRequest)
+            const localVarPath = `/locker-api/sim/reserve`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = '*/*';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(reserveRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {ResetRequest} [resetRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3107,6 +2526,18 @@ export const SimControlControllerApiFp = function(configuration?: Configuration)
         },
         /**
          * 
+         * @param {ReserveRequest} reserveRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async reserve(reserveRequest: ReserveRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CompartmentDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.reserve(reserveRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SimControlControllerApi.reserve']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @param {ResetRequest} [resetRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3166,6 +2597,15 @@ export const SimControlControllerApiFactory = function (configuration?: Configur
         },
         /**
          * 
+         * @param {SimControlControllerApiReserveRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reserve(requestParameters: SimControlControllerApiReserveRequest, options?: RawAxiosRequestConfig): AxiosPromise<CompartmentDto> {
+            return localVarFp.reserve(requestParameters.reserveRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @param {SimControlControllerApiResetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3203,6 +2643,13 @@ export interface SimControlControllerApiDoorRequest {
  */
 export interface SimControlControllerApiFailuresRequest {
     readonly failureRequest: FailureRequest
+}
+
+/**
+ * Request parameters for reserve operation in SimControlControllerApi.
+ */
+export interface SimControlControllerApiReserveRequest {
+    readonly reserveRequest: ReserveRequest
 }
 
 /**
@@ -3244,6 +2691,16 @@ export class SimControlControllerApi extends BaseAPI {
      */
     public failures(requestParameters: SimControlControllerApiFailuresRequest, options?: RawAxiosRequestConfig) {
         return SimControlControllerApiFp(this.configuration).failures(requestParameters.failureRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {SimControlControllerApiReserveRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public reserve(requestParameters: SimControlControllerApiReserveRequest, options?: RawAxiosRequestConfig) {
+        return SimControlControllerApiFp(this.configuration).reserve(requestParameters.reserveRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
