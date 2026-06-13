@@ -1,4 +1,3 @@
-/** Supermarket-scanner beep via WebAudio — no sound asset needed. */
 export function scannerBeep() {
   const ctx = new AudioContext();
   const osc = ctx.createOscillator();

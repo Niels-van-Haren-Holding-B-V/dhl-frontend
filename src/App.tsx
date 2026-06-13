@@ -8,13 +8,10 @@ import { SessionPage } from "./pages/session/SessionPage";
 import { MachinePage } from "./pages/machine/MachinePage";
 
 export function App() {
-  // One bundle, two faces: on the locker hostname the root IS the machine page.
   const isMachineHost = !!config.machineHostname && window.location.hostname === config.machineHostname;
 
   return (
     <Routes>
-      {/* The machine page authenticates with the same courier user but has
-          its own kiosk shell — no shared nav with the courier app. */}
       <Route
         path="/machine"
         element={
@@ -23,9 +20,6 @@ export function App() {
           </RequireAuth>
         }
       />
-      {/* No redirect here: a redirect at / would strip the ?code&state of the
-          OIDC callback before the library exchanges it (login loop). On the
-          locker hostname / simply IS the machine page. */}
       <Route
         path="/"
         element={<RequireAuth>{isMachineHost ? <MachinePage /> : <TripListPage />}</RequireAuth>}

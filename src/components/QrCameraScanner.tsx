@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
 
-/**
- * Live webcam preview that fires onScan exactly once with the first QR code
- * it decodes. Needs a secure context (HTTPS or localhost) for getUserMedia.
- */
+// getUserMedia needs a secure context (HTTPS or localhost).
 export function QrCameraScanner({ onScan }: { onScan: (text: string) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +58,6 @@ export function QrCameraScanner({ onScan }: { onScan: (text: string) => void }) 
   return (
     <div className="relative overflow-hidden rounded">
       <video ref={videoRef} className="h-28 w-full object-cover" muted playsInline />
-      {/* viewfinder corners */}
       <div className="border-dhl-yellow/80 pointer-events-none absolute inset-3 rounded border-2 [mask-image:linear-gradient(black,black)]" />
     </div>
   );

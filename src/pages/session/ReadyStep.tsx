@@ -6,11 +6,6 @@ import { directionLabel } from "../../labels";
 import type { ParcelView } from "../../api/types";
 import type { ValidationResultDto } from "../../api/generated";
 
-/**
- * READY: the machine is bound. Four sub-modes, in priority order:
- * cannot-deliver dead end → rejected validation (size proposal) → parcel
- * picked (door is being opened) → pick a parcel.
- */
 export function ReadyStep({
   selected,
   openParcels,

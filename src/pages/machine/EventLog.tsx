@@ -1,8 +1,7 @@
 import type { SimStateSnapshot } from "../../api/generated";
 
-/** Last 50 sim events, newest on top — the demo's X-ray view. */
 export function EventLog({ state }: { state: SimStateSnapshot }) {
-  const entries = [...(state.eventLog ?? [])].reverse(); // newest on top
+  const entries = [...(state.eventLog ?? [])].reverse();
 
   return (
     <div className="flex min-h-0 grow flex-col rounded-xl border border-neutral-200 bg-neutral-50 p-3">

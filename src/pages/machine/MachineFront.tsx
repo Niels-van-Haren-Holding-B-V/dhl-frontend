@@ -2,10 +2,7 @@ import type { CompartmentDto, SimStateSnapshot } from "../../api/generated";
 import { Door } from "./Door";
 import { ConsoleSlot } from "./ConsoleSlot";
 
-// Door pitch per size in cm — keep mirrored with the template door sizes in
-// the backend (LockerConfigurations). Rendering each slot at pitch/machine
-// height keeps everything true to scale: an XS is a minor postal parcel,
-// never taller than an S. TC/FC modules get a fixed module pitch.
+// Door pitch per size in cm — keep mirrored with LockerConfigurations in the backend.
 const DOOR_PITCH_CM: Record<string, number> = {
   XXS: 10,
   XS: 15,
@@ -22,7 +19,6 @@ function slotPitch(c: CompartmentDto): number {
   return DOOR_PITCH_CM[c.size ?? "M"] ?? 30;
 }
 
-/** Schematic front view: the machine as anyone standing in front of it sees it. */
 export function MachineFront({ state }: { state: SimStateSnapshot }) {
   const columns = new Map<number, CompartmentDto[]>();
   for (const c of state.compartments ?? []) {
@@ -30,8 +26,6 @@ export function MachineFront({ state }: { state: SimStateSnapshot }) {
     columns.set(col, [...(columns.get(col) ?? []), c]);
   }
   const sorted = [...columns.entries()].sort(([a], [b]) => a - b);
-  // Columns differ in total pitch; the machine is as tall as its tallest
-  // column and shorter columns get a filler panel at the bottom.
   const machineCm = Math.max(
     ...sorted.map(([, comps]) => comps.reduce((sum, c) => sum + slotPitch(c), 0)),
     1,
@@ -40,7 +34,6 @@ export function MachineFront({ state }: { state: SimStateSnapshot }) {
   return (
     <section className="flex min-h-0 flex-col">
       <div className="flex min-h-0 grow flex-col rounded-xl border border-neutral-300 bg-neutral-200 p-3 shadow-lg">
-        {/* yellow band over the full width */}
         <div className="bg-dhl-yellow mb-3 flex min-h-12 shrink-0 items-center justify-between rounded-md px-4">
           <span className="bg-dhl-red rounded-sm px-2 py-0.5 text-xs font-black tracking-widest text-white">
             PAKKETAUTOMAAT
@@ -50,7 +43,6 @@ export function MachineFront({ state }: { state: SimStateSnapshot }) {
         <OpenDoorBanner state={state} />
         <div className="flex min-h-0 grow items-stretch gap-1">
           {sorted.map(([col, comps]) => (
-            // no vertical gaps: slot heights are exact percentages of the column
             <div key={col} className="flex min-w-0 flex-1 flex-col">
               {comps
                 .sort((a, b) => (a.nr ?? 0) - (b.nr ?? 0))
@@ -67,7 +59,6 @@ export function MachineFront({ state }: { state: SimStateSnapshot }) {
   );
 }
 
-/** One column slot: a courier door, the brievenbus, or an embedded module. */
 function Slot({
   compartment: c,
   state,
@@ -78,14 +69,11 @@ function Slot({
   machineCm: number;
 }) {
   const height = `${(slotPitch(c) / machineCm) * 100}%`;
-  // The wrapper owns the slot's exact share of the column; the padding is the
-  // visible cabinet frame between doors so adjacent doors never blend.
   return (
     <div style={{ height }} className="pt-[3px] first:pt-0">
       {c.label === "TC" ? (
         <ConsoleSlot state={state} />
       ) : c.label === "FC" ? (
-        // functional compartment — closed service module, nothing to interact with
         <div className="h-full rounded-sm border border-neutral-400 bg-neutral-500 shadow-inner" />
       ) : c.label === "BUS" ? (
         <div className="flex h-full flex-col items-center justify-center rounded-sm border border-neutral-300 bg-linear-to-b from-neutral-200 to-neutral-400">
@@ -99,7 +87,6 @@ function Slot({
   );
 }
 
-/** A real machine never opens two doors; nag until the open one is shut. */
 function OpenDoorBanner({ state }: { state: SimStateSnapshot }) {
   const open = (state.compartments ?? []).filter((c) => c.state === "DOOR_OPEN");
   if (open.length === 0) return null;

@@ -5,7 +5,6 @@ import { useBind } from "../../queries/simState";
 import { apiErrorMessage } from "../../api/client";
 import type { SimStateSnapshot } from "../../api/generated";
 
-/** The TC slot: technical compartment with screen, camera and scanner. */
 export function ConsoleSlot({ state }: { state: SimStateSnapshot }) {
   const bind = useBind();
   const [qr, setQr] = useState("");
@@ -37,7 +36,6 @@ export function ConsoleSlot({ state }: { state: SimStateSnapshot }) {
 
   return (
     <div className="bg-dhl-yellow flex h-full flex-col items-center rounded-sm p-1 shadow-inner">
-      {/* the screen */}
       <div className="flex min-h-0 w-full grow flex-col gap-1 overflow-y-auto rounded-md border-2 border-neutral-700/80 bg-white p-1.5 shadow-inner">
         <p className="text-center text-[11px] font-bold text-neutral-700">24/7 Pakketautomaat</p>
         {splash ? (

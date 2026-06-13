@@ -20,11 +20,8 @@ import { CompletedStep } from "./CompletedStep";
 import type { ParcelView } from "../../api/types";
 import type { ValidationResultDto } from "../../api/generated";
 
-// How many status polls HAND_IN_DOOR_OPEN may last before we offer the
-// door-stuck escape hatches (reopen / report issue). 1.5s per poll.
 const DOOR_STUCK_POLLS = 8;
 
-/** Route guard: every param present, or a dead link landed here. */
 export function SessionPage() {
   const { tripId, stopId, sessionId } = useParams();
   if (!tripId || !stopId || !sessionId) {
@@ -37,20 +34,8 @@ export function SessionPage() {
   return <SessionWizard tripId={tripId} stopId={stopId} sessionId={sessionId} />;
 }
 
-/**
- * The locker wizard. Deliberately NO client-side state machine: every render
- * is one switch on the server's simState from the 1.5s status poll. Kill the
- * tab, reopen this URL, and the wizard lands on the correct step.
- *
- * One-tap flow: the courier picks a parcel (on the stop page or here); as
- * soon as the machine binds the QR, the app fires validate+attempt (hand-in)
- * or hand-out/start itself, so the right door opens without typing. The
- * session protocol from the Locker API stays fully intact underneath.
- */
 function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: string; sessionId: string }) {
   const navigate = useNavigate();
-  // qrPayload only exists in the create response; passed via router state,
-  // optionally with the parcel the courier already picked.
   const navState = useLocation().state as { qrPayload?: string; barcode?: string } | null;
   const qrPayload = navState?.qrPayload;
 
@@ -72,9 +57,6 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
   const simState = session.data?.simState;
   const barcode = selected?.barcode ?? manualBarcode;
 
-  // Re-arm the wizard for a fresh attempt of the SAME parcel: clear the
-  // validation verdict, mutation results/errors and the auto-fire guard, so
-  // the next READY poll fires validate+attempt again.
   const rearm = () => {
     autoFired.current = null;
     setValidation(null);
@@ -82,18 +64,12 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
     validate.reset();
   };
 
-  // Full reset of the flow towards a (possibly different) parcel. The ONE
-  // place that owns the cleanup ritual — forgetting a piece here is how the
-  // "retry fires the stale parcel" class of bug comes back.
   const resetFlow = (next: ParcelView | null = null) => {
     rearm();
     setSelected(next);
     setManualBarcode("");
   };
 
-  // Adopt the parcel picked on the stop page — exactly once. Re-adopting
-  // whenever nothing is selected would re-fire the auto-attempt for the
-  // first parcel after every "Volgend pakket".
   useEffect(() => {
     if (!adoptedNavParcel.current && navState?.barcode && stop) {
       adoptedNavParcel.current = true;
@@ -101,7 +77,6 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
     }
   }, [navState?.barcode, stop]);
 
-  // The one-tap heart: machine bound the QR → open the right door ourselves.
   useEffect(() => {
     if (simState !== "READY" || !selected || autoFired.current === selected.barcode) return;
     if (action.isPending || validate.isPending) return;
@@ -118,19 +93,14 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
     }
   }, [simState, selected, action, validate]);
 
-  // How long the door has been open, counted in status polls.
   const doorIsOpen = simState === "HAND_IN_DOOR_OPEN" || simState === "HAND_OUT_DOOR_OPEN";
   const polledAt = session.dataUpdatedAt;
   useEffect(() => {
-    // counting ticks of an external poll is a legitimate setState-in-effect
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDoorOpenPolls((n) => (doorIsOpen ? n + 1 : 0));
   }, [doorIsOpen, polledAt]);
 
   const actionError = action.error ?? validate.error;
-  // A physically open door blocks every door-opening action. Don't park on
-  // an error: re-arm on every status poll so the flow continues by itself
-  // the moment someone closes the door.
   const doorBlocked = apiErrorCode(actionError) === "DOOR_STILL_OPEN";
   const [waitingForDoorClose, setWaitingForDoorClose] = useState(false);
   const lastDoorRetry = useRef(0);
@@ -145,21 +115,12 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
     lastDoorRetry.current = polledAt;
     rearm();
   });
-  // A reconciled response means the requested mutation did NOT happen: the
-  // locker reported a conflict and the app re-synced to its current state.
-  // When that re-sync parks us back on READY with a parcel picked, no door
-  // opened — and the auto-fire guard has already burnt for this barcode, so
-  // nothing will re-fire by itself. Surface the retry button.
   const reconciledOnReady = action.data?.reconciled === true && simState === "READY";
-  // Escalation dead-end: the machine has no free door big enough, not even
-  // after size escalation — the parcel cannot be delivered here.
   const cannotDeliver =
     (validation != null && !validation.valid && validation.reason === "NO_CAPACITY") ||
     apiErrorCode(action.error) === "NO_COMPARTMENT_AVAILABLE";
   const openParcels =
     stop?.parcels.filter((p) => p.status === "EXPECTED" || p.status === "NOT_DELIVERED") ?? [];
-  // What is still to do, beyond the parcel currently in the doors. The trips
-  // query may lag a confirm by a few seconds, so exclude the current barcode.
   const remainingParcels = openParcels.filter((p) => p.barcode !== selected?.barcode);
   const nextParcel = remainingParcels[0] ?? null;
 
@@ -170,7 +131,6 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
     if (parcel) {
       setSelected(parcel);
     } else {
-      // unknown barcode: let the backend judge it as hand-in
       validate.mutate(manualBarcode, {
         onSuccess: (result) => {
           setValidation(result);
@@ -231,19 +191,8 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
             stuck={doorOpenPolls > DOOR_STUCK_POLLS}
             busy={action.isPending}
             onReopen={() => action.mutate({ action: "reopen" })}
-            onReportIssue={() =>
-              // The defect door goes out of rotation; re-attempting opens the
-              // next free door of the same size, or one size up when that
-              // size has no free doors left.
-              action.mutate({ action: "report-issue" }, { onSuccess: rearm })
-            }
-            onReportSize={() =>
-              // The sim remembers the reported size; re-arming makes the
-              // wizard re-attempt at once, so the next bigger free door opens
-              // (S → M → … → XXL). When nothing fits anymore the
-              // cannot-deliver screen takes over.
-              action.mutate({ action: "report-size" }, { onSuccess: rearm })
-            }
+            onReportIssue={() => action.mutate({ action: "report-issue" }, { onSuccess: rearm })}
+            onReportSize={() => action.mutate({ action: "report-size" }, { onSuccess: rearm })}
           />
         ) : simState === "HAND_IN_AWAITING_CONFIRM" ? (
           <ConfirmStep
@@ -260,7 +209,6 @@ function SessionWizard({ tripId, stopId, sessionId }: { tripId: string; stopId: 
             barcode={barcode}
             busy={action.isPending}
             onReportMissing={() =>
-              // the empty compartment's door stays open; back to the picker
               action.mutate({ action: "report-missing", barcode }, { onSuccess: () => resetFlow() })
             }
             onAbort={() => action.mutate({ action: "abort" })}

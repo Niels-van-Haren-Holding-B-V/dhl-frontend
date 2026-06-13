@@ -1,7 +1,6 @@
 import { directionLabel } from "../labels";
 import type { ParcelView } from "../api/types";
 
-/** Which parcel this step is about: barcode big and scannable-by-eye, plus size/weight. */
 export function ParcelCard({
   parcel,
   fallbackBarcode,

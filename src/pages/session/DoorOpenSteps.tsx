@@ -4,7 +4,6 @@ import { Step } from "../../components/Step";
 import { DoorAnimation } from "./DoorAnimation";
 import type { ParcelView } from "../../api/types";
 
-/** HAND_IN_DOOR_OPEN: place the parcel; escalation hatches for stuck/too-small doors. */
 export function HandInDoorOpenStep({
   compartmentLabel,
   parcel,
@@ -18,7 +17,6 @@ export function HandInDoorOpenStep({
   compartmentLabel: string | undefined;
   parcel: ParcelView | null;
   barcode: string;
-  /** The door has been open longer than the stuck threshold — offer escape hatches. */
   stuck: boolean;
   busy: boolean;
   onReopen: () => void;
@@ -53,7 +51,6 @@ export function HandInDoorOpenStep({
   );
 }
 
-/** HAND_OUT_DOOR_OPEN: take the parcel out; report-missing and abort hatches. */
 export function HandOutDoorOpenStep({
   compartmentLabel,
   parcel,

@@ -3,16 +3,9 @@ import { useAnnounceParcel } from "../../queries/simState";
 import { apiErrorMessage } from "../../api/client";
 
 function randomBarcode() {
-  // wide enough that repeated demo announcements do not collide
   return `DHL-IN-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 }
 
-/**
- * Stand-in for the upstream planning system: announces a parcel via the
- * backend, which publishes it to the parcel-intake topic; the Kafka consumer
- * ingests it and the courier app picks it up on the next trips refresh. The
- * frontend only talks to our backend — Kafka stays server-side.
- */
 export function AnnounceParcelPanel() {
   const announce = useAnnounceParcel();
   const [barcode, setBarcode] = useState(randomBarcode);

@@ -2,9 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deliveryApi, lockerApi } from "../api/client";
 import type { LockerActionResponse } from "../api/generated";
 
-// Separate short-lived query, never merged into ['trips']: the trips list
-// refreshes at its own 5s pace; an active locker session needs a tighter
-// 1.5s loop and disappears when the session ends.
 export function useLockerSession(sessionId: string | undefined) {
   return useQuery({
     queryKey: ["lockerSession", sessionId],
@@ -22,11 +19,6 @@ export function useCreateSession() {
   });
 }
 
-/**
- * One mutation for every wizard action. The wizard renders purely from server
- * state, so each action just fires and refreshes both queries; the response
- * is kept by the caller only for transient details (compartment, reconciled).
- */
 export function useSessionAction(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -83,11 +75,6 @@ export function useSessionAction(sessionId: string) {
   });
 }
 
-/**
- * The "existing" registerDelivery endpoint, called directly when the locker
- * flow dead-ends (no fitting compartment): the parcel falls back to the
- * standard not-delivered handling.
- */
 export function useRegisterNotDelivered(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({

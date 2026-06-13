@@ -7,16 +7,14 @@ import {
   TripControllerApi,
 } from "./generated";
 
-// The auth layer pushes the current access token here (see RequireAuth); the
-// client itself stays usable from non-React code.
+// Token pushed in from the auth layer so this client stays usable from non-React code.
 let accessToken: string | undefined;
 
 export function setAccessToken(token: string | undefined) {
   accessToken = token;
 }
 
-// The auth layer registers a re-login handler; a 401 means the token expired
-// or was invalidated server-side (e.g. Keycloak restart) — trigger it once.
+// 401 triggers the re-login handler once (reauthTriggered guards against a redirect storm).
 let onUnauthorized: (() => void) | undefined;
 let reauthTriggered = false;
 
@@ -47,7 +45,6 @@ export const lockerApi = new LockerSessionControllerApi(undefined, config.apiBas
 export const simApi = new SimProxyControllerApi(undefined, config.apiBaseUrl, http);
 export const deliveryApi = new DeliveryControllerApi(undefined, config.apiBaseUrl, http);
 
-// Locker rejections (HTTP 422 {code, message}) the courier can act on.
 const rejectionMessages: Record<string, string> = {
   DOOR_STILL_OPEN: "Er staat nog een deur open op de automaat — sluit die eerst.",
   DUPLICATE_BARCODE: "Deze barcode bestaat al — kies een andere.",
@@ -58,7 +55,6 @@ const rejectionMessages: Record<string, string> = {
   COMPARTMENT_DEFECT: "Het vak meldt een storing.",
 };
 
-/** Rejection code from a 422, if any — lets the UI branch on specific refusals. */
 export function apiErrorCode(error: unknown): string | undefined {
   if (axios.isAxiosError(error) && error.response?.status === 422) {
     return (error.response.data as { code?: string } | undefined)?.code;
@@ -66,7 +62,6 @@ export function apiErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
-/** Dutch-friendly message for failed calls; 503 = open circuit breaker. */
 export function apiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const body = error.response?.data as { code?: string; message?: string } | undefined;

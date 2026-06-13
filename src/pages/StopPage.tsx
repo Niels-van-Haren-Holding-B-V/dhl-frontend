@@ -34,11 +34,6 @@ export function StopPage() {
             </h2>
             <ul className="flex flex-col gap-3">
               {stop.parcels.map((parcel) => {
-                // One-tap flow: at a LOCKER stop, tapping an open parcel starts
-                // the session for exactly that parcel; after the machine scans
-                // the QR the right door opens by itself. NOT_DELIVERED stays
-                // tappable: the reaper parks abandoned sessions there and a
-                // courier must be able to retry.
                 const tappable =
                   stop.deliveryLocationType === "LOCKER" &&
                   (parcel.status === "EXPECTED" || parcel.status === "NOT_DELIVERED");

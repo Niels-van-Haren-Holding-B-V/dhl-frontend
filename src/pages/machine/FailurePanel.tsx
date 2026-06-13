@@ -11,7 +11,6 @@ const FAILURE_LABELS: Record<FailureRequestModeEnum, string> = {
   FORCE_409: "Forceer 409",
 };
 
-/** Failure injection: flip a storing here, watch the courier phone react. */
 export function FailurePanel({ state }: { state: SimStateSnapshot }) {
   const toggle = useFailureToggle();
   const active = new Set(state.activeFailures ?? []);

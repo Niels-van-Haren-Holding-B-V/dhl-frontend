@@ -11,7 +11,6 @@ const STRIP: { key: SimSessionDtoStateEnum; label: string }[] = [
   { key: "FINISHED", label: "KLAAR" },
 ];
 
-/** Step strip of the sim's state machine + the optimistic-lock version badge. */
 export function StateInspector({ state }: { state: SimStateSnapshot }) {
   const session = state.session;
   const version = session?.version;

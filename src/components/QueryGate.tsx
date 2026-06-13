@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { apiErrorMessage } from "../api/client";
 
-/** Uniform loading/error rendering around a TanStack Query result. */
 export function QueryGate({
   isPending,
   error,

@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { simApi } from "../api/client";
 import type { DoorRequestActionEnum, FailureRequestModeEnum, ParcelAnnouncement } from "../api/generated";
 
-// Machine page heartbeat: the whole kiosk renders from this one snapshot.
 export function useSimState() {
   return useQuery({
     queryKey: ["simState"],
@@ -40,11 +39,6 @@ export function useSimReset() {
   return useSimMutation((_: void) => simApi.reset1());
 }
 
-/**
- * Stand-in for the upstream planning system: the announcement goes onto the
- * parcel-intake Kafka topic and is ingested asynchronously — the parcel shows
- * up in the courier app via the regular trips refresh a moment later.
- */
 export function useAnnounceParcel() {
   const queryClient = useQueryClient();
   return useMutation({

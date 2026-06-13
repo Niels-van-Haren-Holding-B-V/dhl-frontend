@@ -3,7 +3,6 @@ import { ParcelCard } from "../../components/ParcelCard";
 import { Step } from "../../components/Step";
 import type { ParcelDirection, ParcelView } from "../../api/types";
 
-/** HAND_IN/HAND_OUT_COMPLETED: registration done; offer the next parcel for this stop. */
 export function CompletedStep({
   direction,
   nextParcel,

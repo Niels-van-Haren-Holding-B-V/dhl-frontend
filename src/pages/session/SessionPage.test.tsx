@@ -6,10 +6,6 @@ import { SessionPage } from "./SessionPage";
 import type { SessionStatusDto, ValidationResultDto } from "../../api/generated";
 import type { ParcelView, TripView } from "../../api/types";
 
-// The wizard renders purely from the polled server state, so the whole page is
-// testable by stubbing the query hooks and flipping simState per test — no
-// network, no QueryClient. The mocks live in one mutable bag (hoisted above
-// the vi.mock factories) that beforeEach resets.
 const q = vi.hoisted(() => {
   const makeMutation = () => ({
     mutate: vi.fn(),
@@ -96,7 +92,6 @@ function sessionUi(state?: { qrPayload?: string; barcode?: string }) {
   );
 }
 
-/** Make the stubbed validate call answer synchronously with the given verdict. */
 function answerValidate(result: ValidationResultDto) {
   q.validate.mutate.mockImplementation(
     (_barcode: unknown, opts?: { onSuccess?: (result: ValidationResultDto) => void }) =>
@@ -181,7 +176,6 @@ describe("READY — one-tap auto-fire", () => {
     expect(q.validate.mutate.mock.calls[0][0]).toBe("DHL-IN-001");
     expect(q.action.mutate).toHaveBeenCalledWith({ action: "attempt", barcode: "DHL-IN-001" });
 
-    // more polls of the same state must NOT re-fire the attempt
     q.session.dataUpdatedAt = 2;
     view.rerender(sessionUi({ barcode: "DHL-IN-001" }));
     q.session.dataUpdatedAt = 3;
@@ -224,7 +218,6 @@ describe("READY — escalation", () => {
     expect(screen.getByText(/Vak te klein — nieuw voorstel: M/)).toBeInTheDocument();
     expect(q.action.mutate).not.toHaveBeenCalled();
 
-    // retry re-arms the wizard: verdict cleared, mutations reset
     fireEvent.click(screen.getByText("Opnieuw proberen"));
     expect(q.action.reset).toHaveBeenCalled();
     expect(q.validate.reset).toHaveBeenCalled();
@@ -308,7 +301,6 @@ describe("confirm steps", () => {
   });
 
   it("recovers onto the right step from server state alone (killed tab)", () => {
-    // no router state at all: the page is opened fresh mid-flow
     setSimState("HAND_IN_AWAITING_CONFIRM");
     render(sessionUi());
     expect(screen.getByText("Deur gesloten")).toBeInTheDocument();
@@ -324,7 +316,7 @@ describe("HAND_OUT door open", () => {
     fireEvent.click(screen.getByText("Pakket ontbreekt"));
     expect(q.action.mutate).toHaveBeenCalledWith(
       { action: "report-missing", barcode: "DHL-OUT-001" },
-      expect.anything(), // onSuccess resets the flow back to the picker
+      expect.anything(),
     );
     fireEvent.click(screen.getByText("Afbreken"));
     expect(q.action.mutate).toHaveBeenCalledWith({ action: "abort" });
@@ -362,16 +354,11 @@ describe("footers", () => {
   });
 
   it("offers a retry when a reconciled action leaves the wizard parked on READY", () => {
-    // FORCE_409 scenario: the attempt was rejected, the BFF reconciled back
-    // to READY (success response, no error) — without a retry the one-tap
-    // flow dead-ends because the auto-fire guard has burnt for this barcode.
     setSimState("READY");
     q.action.data = { reconciled: true };
     render(sessionUi({ barcode: "DHL-IN-001" }));
     expect(screen.getByText(/bijgewerkt na een conflict/)).toBeInTheDocument();
     fireEvent.click(screen.getByText("Opnieuw proberen"));
-    // rearm: clears the mutation result and the auto-fire guard so the
-    // next READY poll fires validate+attempt again
     expect(q.action.reset).toHaveBeenCalled();
     expect(q.validate.reset).toHaveBeenCalled();
   });

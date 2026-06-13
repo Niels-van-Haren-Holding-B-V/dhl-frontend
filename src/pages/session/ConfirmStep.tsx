@@ -3,7 +3,6 @@ import { ParcelCard } from "../../components/ParcelCard";
 import { Step } from "../../components/Step";
 import type { ParcelDirection, ParcelView } from "../../api/types";
 
-/** HAND_IN/HAND_OUT_AWAITING_CONFIRM: door closed, courier confirms the parcel. */
 export function ConfirmStep({
   direction,
   parcel,

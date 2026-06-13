@@ -5,7 +5,6 @@ import { FailurePanel } from "./FailurePanel";
 import { AnnounceParcelPanel } from "./AnnounceParcelPanel";
 import { EventLog } from "./EventLog";
 
-/** Operator console: inspector, failure injection, parcel intake, event log. */
 export function ConsolePane({ state }: { state: SimStateSnapshot }) {
   const reset = useSimReset();
 

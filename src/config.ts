@@ -1,11 +1,8 @@
-// Runtime config injected via /config.js (window.__APP_CONFIG__) so one image
-// serves every environment — see public/config.js for the dev defaults.
 export interface AppConfig {
   apiBaseUrl: string;
   authUrl: string;
   authRealm: string;
   authClientId: string;
-  /** Hostname that serves the machine page at / (second ingress, same bundle). */
   machineHostname?: string;
 }
 

@@ -1,4 +1,3 @@
-/** Card wrapper for one wizard step: a titled white card, optionally toned. */
 export function Step({
   title,
   tone,

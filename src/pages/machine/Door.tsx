@@ -1,12 +1,10 @@
 import { useDoor } from "../../queries/simState";
 import type { CompartmentDto } from "../../api/generated";
 
-/** A single compartment door, rendered by its live state. */
 export function Door({ compartment: c }: { compartment: CompartmentDto }) {
   const door = useDoor();
 
   if (c.state === "DOOR_OPEN") {
-    // open door: dark-ish cavity + door panel swung out to the left
     return (
       <div className="relative h-full rounded-sm bg-neutral-400 shadow-inner ring-2 ring-amber-400">
         <div className="absolute inset-y-0 left-0 w-2/5 origin-left -skew-y-6 animate-pulse rounded-sm border border-neutral-400 bg-linear-to-r from-neutral-50 to-neutral-300 shadow-md" />
@@ -46,7 +44,6 @@ export function Door({ compartment: c }: { compartment: CompartmentDto }) {
     <div
       className={`relative flex h-full flex-col items-center justify-center overflow-hidden rounded-sm border border-neutral-300 shadow-sm ${stateClass}`}
     >
-      {/* handle */}
       <span
         className={`absolute top-1/2 right-1 h-3 w-1 -translate-y-1/2 rounded-full ${occupied ? "bg-neutral-300/70" : "bg-neutral-500/60"}`}
         aria-hidden

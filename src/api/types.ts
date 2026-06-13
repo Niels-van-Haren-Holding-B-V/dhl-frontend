@@ -8,11 +8,7 @@ import type {
   TripDto,
 } from "./generated";
 
-// springdoc doesn't emit `required` for Kotlin non-null properties (yet), so
-// every generated field is optional. The backend DTOs are non-null Kotlin data
-// classes; model that reality once here (and cast once in the trips query)
-// instead of optional-chaining through every component. `size` stays nullable —
-// it really is optional in the backend.
+// springdoc doesn't emit `required` for Kotlin non-null props, so every generated field is optional; these Required<> casts model the real non-null DTOs (size stays nullable).
 export type ParcelView = Required<Omit<ParcelDto, "size" | "dimensions">> & {
   size?: ParcelDto["size"];
   dimensions: Required<DimensionsDto>;
